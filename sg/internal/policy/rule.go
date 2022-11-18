@@ -52,7 +52,6 @@ func loadRulesFromModule(module *ast.Module) []Rule {
 			Kind:           QueryKind(parsed[1]),
 			Name:           strings.TrimPrefix(ruleString, parsed[1]+"_"),
 			Namespace:      moduleNamespace,
-			DocLink:        nil, // TODO
 			SourceLocation: regoRule.Location,
 		}
 
