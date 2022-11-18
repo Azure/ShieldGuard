@@ -29,8 +29,6 @@ type Rule struct {
 	Name string
 	// Namespace specifies the namespace of the rule.
 	Namespace string
-	// DocLink is the link to the documentation of the rule.
-	DocLink *string
 	// SourceLocation is the source definition of the rule.
 	SourceLocation *ast.Location
 }
