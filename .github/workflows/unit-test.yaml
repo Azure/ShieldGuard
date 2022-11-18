@@ -22,8 +22,9 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
-    - name: Test
+    - name: Test ${{ matrix.module }}
       env:
         MODULE: ${{ matrix.module }}
       run: |
-        go test -v "./$MODULE/..."
+        cd "$MODULE"
+        go test -v "./..."
