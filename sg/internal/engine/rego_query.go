@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/ShieldGuard/sg/internal/policy"
 	"github.com/Azure/ShieldGuard/sg/internal/result"
 	"github.com/Azure/ShieldGuard/sg/internal/source"
+	"github.com/Azure/ShieldGuard/sg/internal/utils"
 )
 
 type loadedConfiguration struct {
@@ -108,7 +109,7 @@ func (engine *RegoEngine) queryRule(
 	if err != nil {
 		return fmt.Errorf("failed to execute exception query (%q): %w", exceptionQuery, err)
 	}
-	exceptions = filterList(exceptions, func(x result.Result) bool { return x.Passed() })
+	exceptions = utils.Filter(exceptions, func(x result.Result) bool { return x.Passed() })
 
 	// execute query
 	// NOTE: even if the exception query returns true, we still execute the query

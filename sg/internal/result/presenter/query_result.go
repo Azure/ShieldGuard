@@ -4,6 +4,7 @@ import (
 	"github.com/Azure/ShieldGuard/sg/internal/engine"
 	"github.com/Azure/ShieldGuard/sg/internal/policy"
 	"github.com/Azure/ShieldGuard/sg/internal/result"
+	"github.com/Azure/ShieldGuard/sg/internal/utils"
 )
 
 type policyRuleObj struct {
@@ -46,20 +47,12 @@ func asQueryResultsObj(queryResult result.QueryResults) queryResultsObj {
 		Filename:   queryResult.Source.Name(),
 		Namespace:  engine.PackageMain,
 		Success:    queryResult.Successes,
-		Failures:   mapList(queryResult.Failures, asResultObj),
-		Warnings:   mapList(queryResult.Warnings, asResultObj),
-		Exceptions: mapList(queryResult.Exceptions, asResultObj),
+		Failures:   utils.Map(queryResult.Failures, asResultObj),
+		Warnings:   utils.Map(queryResult.Warnings, asResultObj),
+		Exceptions: utils.Map(queryResult.Exceptions, asResultObj),
 	}
 }
 
 func asQueryResultsObjList(queryResultsList []result.QueryResults) []queryResultsObj {
-	return mapList(queryResultsList, asQueryResultsObj)
-}
-
-func mapList[T any, U any](list []T, fn func(T) U) []U {
-	result := make([]U, len(list))
-	for i, item := range list {
-		result[i] = fn(item)
-	}
-	return result
+	return utils.Map(queryResultsList, asQueryResultsObj)
 }
