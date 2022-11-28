@@ -6,9 +6,12 @@ import (
 	"io"
 	"path/filepath"
 
+	"github.com/Azure/ShieldGuard/sg/internal/engine"
 	"github.com/Azure/ShieldGuard/sg/internal/project"
 	"github.com/Azure/ShieldGuard/sg/internal/result"
 	"github.com/Azure/ShieldGuard/sg/internal/result/presenter"
+	"github.com/Azure/ShieldGuard/sg/internal/source"
+	"github.com/Azure/ShieldGuard/sg/internal/utils"
 	"github.com/spf13/pflag"
 )
 
@@ -21,10 +24,16 @@ type cliApp struct {
 	stdout io.Writer
 }
 
-func newCliApp() *cliApp {
-	return &cliApp{
+func newCliApp(ms ...func(*cliApp)) *cliApp {
+	rv := &cliApp{
 		outputFormat: presenter.FormatJSON,
 	}
+
+	for _, m := range ms {
+		m(rv)
+	}
+
+	return rv
 }
 
 func (cliApp *cliApp) Run() error {
@@ -46,7 +55,7 @@ func (cliApp *cliApp) Run() error {
 		if err != nil {
 			return fmt.Errorf("run target (%s): %w", target.Name, err)
 		}
-		queryResultsList = append(queryResultsList, *queryResult)
+		queryResultsList = append(queryResultsList, queryResult...)
 	}
 
 	if err := presenter.QueryResultsList(cliApp.outputFormat, queryResultsList).
@@ -98,6 +107,45 @@ func (cliApp *cliApp) queryFileTarget(
 	ctx context.Context,
 	contextRoot string,
 	target project.FileTargetSpec,
-) (*result.QueryResults, error) {
-	return nil, nil
+) ([]result.QueryResults, error) {
+	resolveToContextRoot := resolveToContextRootFn(contextRoot)
+
+	policyPaths := utils.Map(target.Policies, resolveToContextRoot)
+	paths := utils.Map(target.Paths, resolveToContextRoot)
+	// TODO: load data paths
+	// dataPaths := utils.Map(target.Data, resolveToContextRoot)
+
+	sources, err := source.FromPath(paths).ContextRoot(contextRoot).Complete()
+	if err != nil {
+		return nil, fmt.Errorf("load sources failed: %w", err)
+	}
+
+	queryer, err := engine.QueryWithPolicy(policyPaths).Complete()
+	if err != nil {
+		return nil, fmt.Errorf("create queryer failed: %w", err)
+	}
+
+	var rv []result.QueryResults
+	for _, source := range sources {
+		queryOpts := &engine.QueryOptions{}
+		queryResult, err := queryer.Query(ctx, source, queryOpts)
+		if err != nil {
+			return nil, fmt.Errorf("query failed: %w", err)
+		}
+
+		rv = append(rv, queryResult)
+	}
+
+	return rv, nil
+}
+
+func resolveToContextRootFn(contextRoot string) func(string) string {
+	return func(path string) string {
+		// FIXME(hbc): handle absolute paths input
+		//             We should limit the input to be relative to the context root.
+
+		fullPath := filepath.Join(contextRoot, path)
+		fullPath = filepath.Clean(fullPath)
+		return fullPath
+	}
 }

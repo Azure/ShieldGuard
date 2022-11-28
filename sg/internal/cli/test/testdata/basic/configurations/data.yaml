@@ -1,0 +1,6 @@
+name: foo
+---
+name: is-not-foo
+---
+name: foo
+skipped: true

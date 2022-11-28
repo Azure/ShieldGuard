@@ -1,0 +1,6 @@
+files:
+- name: test-configurations
+  paths:
+  - configurations
+  policies:
+  - policy
