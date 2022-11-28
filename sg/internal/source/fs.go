@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"strings"
 
 	"github.com/open-policy-agent/conftest/parser"
 )
@@ -25,8 +26,47 @@ func (s *fsSource) ParsedConfigurations() ([]interface{}, error) {
 	return s.configurations, nil
 }
 
+func relativeToContextRootFn(contextRoot string) func(string) string {
+	if contextRoot == "" {
+		return func(path string) string {
+			return path
+		}
+	}
+
+	return func(s string) string {
+		rel, err := filepath.Rel(contextRoot, s)
+		if err != nil {
+			// NOTE: we don't expect this as we guard this in loadSourceFromPaths.
+			panic(fmt.Sprintf("path %q is not relative to context root %q", s, contextRoot))
+		}
+		return rel
+	}
+}
+
 // ref: https://github.com/open-policy-agent/conftest/blob/f18b7bbde2fdbd766c8348dff3a0a24792eb98c7/runner/test.go#L99
-func loadSourceFromPaths(paths []string) ([]Source, error) {
+func loadSourceFromPaths(contextRoot string, paths []string) ([]Source, error) {
+	// when contextRoot specified, all paths must be relative to contextRoot.
+	// FIXME(hbc): this implementation may not be correct in Windows (see context in `filepath.HasPrefix`)
+	//             We should revisit this in later changes.
+	if contextRoot != "" {
+		contextRootAbs, err := filepath.Abs(contextRoot)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get absolute path of context root %q: %w", contextRoot, err)
+		}
+
+		for _, p := range paths {
+			pAbs, err := filepath.Abs(p)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get absolute path of %q: %w", p, err)
+			}
+
+			if !strings.HasPrefix(pAbs, contextRootAbs) {
+				return nil, fmt.Errorf("path %q is not relative to context root %q", p, contextRoot)
+			}
+		}
+	}
+	relativeToContextRoot := relativeToContextRootFn(contextRoot)
+
 	var files []string
 
 	walk := func(path string, info fs.DirEntry, err error) error {
@@ -70,7 +110,7 @@ func loadSourceFromPaths(paths []string) ([]Source, error) {
 		}
 
 		rv = append(rv, &fsSource{
-			filePath:       filePath,
+			filePath:       relativeToContextRoot(filePath),
 			configurations: subConfigurations,
 		})
 	}

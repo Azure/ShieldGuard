@@ -9,7 +9,7 @@ import (
 
 func Test_loadSourceFromPaths(t *testing.T) {
 	t.Run("sample", func(t *testing.T) {
-		sources, err := loadSourceFromPaths([]string{"./testdata/sample"})
+		sources, err := loadSourceFromPaths("", []string{"./testdata/sample"})
 		assert.NoError(t, err)
 
 		checkers := map[string]func(source Source){
