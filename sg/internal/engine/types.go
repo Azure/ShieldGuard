@@ -18,5 +18,5 @@ type Queryer interface {
 		ctx context.Context,
 		source source.Source,
 		opts ...*QueryOptions,
-	) (*result.QueryResults, error)
+	) (result.QueryResults, error)
 }

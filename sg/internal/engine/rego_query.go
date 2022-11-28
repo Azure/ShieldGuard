@@ -52,19 +52,19 @@ func (engine *RegoEngine) Query(
 	ctx context.Context,
 	source source.Source,
 	opts ...*QueryOptions,
-) (*result.QueryResults, error) {
+) (result.QueryResults, error) {
 	loadedConfigurations, err := loadSource(source)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load source: %w", err)
+		return result.QueryResults{}, fmt.Errorf("failed to load source: %w", err)
 	}
 
-	rv := &result.QueryResults{
+	rv := result.QueryResults{
 		Source: source,
 	}
 	for _, loadedConfiguration := range loadedConfigurations {
 		for _, policyPackage := range engine.policyPackages {
-			if err := engine.queryPackage(ctx, policyPackage, loadedConfiguration, rv); err != nil {
-				return nil, err
+			if err := engine.queryPackage(ctx, policyPackage, loadedConfiguration, &rv); err != nil {
+				return result.QueryResults{}, err
 			}
 		}
 	}
