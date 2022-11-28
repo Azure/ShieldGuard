@@ -35,7 +35,9 @@ func loadSource(source source.Source) ([]loadedConfiguration, error) {
 	return rv, nil
 }
 
-const packageMain = "main"
+// PackageMain is the name of the main package.
+// To ease the usage, we will only use rules from main package.
+const PackageMain = "main"
 
 // RegoEngine is the OPA based query engine implementation.
 type RegoEngine struct {
@@ -76,7 +78,7 @@ func (engine *RegoEngine) queryPackage(
 	queryResult *result.QueryResults,
 ) error {
 	for _, rule := range policyPackage.Rules() {
-		if rule.Namespace != packageMain {
+		if rule.Namespace != PackageMain {
 			// we only care about rules in the main package
 			continue
 		}
@@ -101,7 +103,7 @@ func (engine *RegoEngine) queryRule(
 	queryResult *result.QueryResults,
 ) error {
 	// execute exception query
-	exceptionQuery := fmt.Sprintf("data.%s.exception[_][_] == %q", packageMain, policyRule.Name)
+	exceptionQuery := fmt.Sprintf("data.%s.exception[_][_] == %q", PackageMain, policyRule.Name)
 	exceptions, err := engine.executeOneQuery(ctx, loadedConfiguration.Configuration, exceptionQuery)
 	if err != nil {
 		return fmt.Errorf("failed to execute exception query (%q): %w", exceptionQuery, err)
@@ -110,7 +112,7 @@ func (engine *RegoEngine) queryRule(
 
 	// execute query
 	// NOTE: even if the exception query returns true, we still execute the query
-	query := fmt.Sprintf("data.%s.%s", packageMain, policyRule.Query())
+	query := fmt.Sprintf("data.%s.%s", PackageMain, policyRule.Query())
 	results, err := engine.executeOneQuery(ctx, loadedConfiguration.Configuration, query)
 	if err != nil {
 		return fmt.Errorf("failed to execute query (%q): %w", query, err)
