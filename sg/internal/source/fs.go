@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/open-policy-agent/conftest/parser"
@@ -99,9 +100,15 @@ func loadSourceFromPaths(contextRoot string, paths []string) ([]Source, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse configurations: %w", err)
 	}
+	filePathsSorted := make([]string, 0, len(configurations))
+	for filePath := range configurations {
+		filePathsSorted = append(filePathsSorted, filePath)
+	}
+	sort.Strings(filePathsSorted)
 
 	var rv []Source
-	for filePath, c := range configurations {
+	for _, filePath := range filePathsSorted {
+		c := configurations[filePath]
 		var subConfigurations []interface{}
 		if cc, ok := c.([]interface{}); ok {
 			subConfigurations = cc
