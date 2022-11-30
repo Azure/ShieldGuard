@@ -26,5 +26,4 @@ jobs:
       env:
         MODULE: ${{ matrix.module }}
       run: |
-        cd "$MODULE"
-        go test -v "./..."
+        make -C $MODULE test
