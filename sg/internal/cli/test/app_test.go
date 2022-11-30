@@ -33,7 +33,7 @@ func Test_cliApp_basic(t *testing.T) {
 		cliApp.contextRoot = resolveTestdataPath(t, "./testdata/basic")
 		cliApp.outputFormat = presenter.FormatJSON
 		cliApp.stdout = withDebugOutput(&output)
-		cliApp.projectSpecFile = resolveTestdataPath(t, "./testdata/basic/project.yaml")
+		cliApp.projectSpecFile = resolveTestdataPath(t, "./testdata/basic/sg-project.yaml")
 	})
 
 	assert.NoError(t, cliApp.Run(), "cliApp run")
@@ -49,7 +49,7 @@ func Test_cliApp_defaults(t *testing.T) {
 		cliApp.contextRoot = resolveTestdataPath(t, "./testdata/basic")
 		cliApp.outputFormat = presenter.FormatJSON
 		cliApp.stdout = os.Stderr
-		cliApp.projectSpecFile = resolveTestdataPath(t, "./testdata/basic/project.yaml")
+		cliApp.projectSpecFile = resolveTestdataPath(t, "./testdata/basic/sg-project.yaml")
 	}
 
 	cases := []*cliApp{

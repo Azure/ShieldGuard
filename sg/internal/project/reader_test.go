@@ -39,7 +39,7 @@ files:
 
 	t.Run("ReadFromFile", func(t *testing.T) {
 		tempDir := t.TempDir()
-		specFile := filepath.Join(tempDir, "project.yaml")
+		specFile := filepath.Join(tempDir, SpecFileName)
 		err := os.WriteFile(specFile, []byte(validConfigContent), 0644)
 		assert.NoError(t, err, "write config file")
 
