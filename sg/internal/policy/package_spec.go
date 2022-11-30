@@ -1,9 +1,12 @@
 package policy
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"text/template"
 
 	"gopkg.in/yaml.v2"
 )
@@ -17,6 +20,7 @@ type RuleSpec struct {
 	// - {{.Name}}: the name of the rule.
 	// - {{.Kind}}: the kind of the rule. See `QueryKind` for available options.
 	// - {{.SourceFileName}}: the source file name (without the .rego extension) of the rule.
+	//                        If the rule is not defined in a source file, this will be empty.
 	DocLink string `json:"doc_link,omitempty" yaml:"doc_link,omitempty"`
 }
 
@@ -52,4 +56,36 @@ func loadPackageSpecFromDir(dir string) (PackageSpec, error) {
 		}
 		return spec, nil
 	}
+}
+
+// ResolveRuleDocLink resolves the rule document link.
+func ResolveRuleDocLink(spec PackageSpec, rule Rule) (string, error) {
+	if spec.Rule == nil || spec.Rule.DocLink == "" {
+		// not set
+		return "", nil
+	}
+
+	tmpl, err := template.New("doc-link").Parse(spec.Rule.DocLink)
+	if err != nil {
+		return "", fmt.Errorf("parse %q as template: %w", spec.Rule.DocLink, err)
+	}
+
+	var b bytes.Buffer
+
+	tmplPayload := map[string]interface{}{
+		"Name":           rule.Name,
+		"Kind":           rule.Kind,
+		"SourceFileName": "",
+	}
+	if rule.SourceLocation != nil {
+		f := filepath.Base(rule.SourceLocation.File)
+		f = strings.TrimSuffix(f, filepath.Ext(f))
+		tmplPayload["SourceFileName"] = f
+	}
+
+	if err := tmpl.Execute(&b, tmplPayload); err != nil {
+		return "", fmt.Errorf("execute template: %w", err)
+	}
+
+	return b.String(), nil
 }

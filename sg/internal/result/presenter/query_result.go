@@ -8,12 +8,14 @@ import (
 )
 
 type policyRuleObj struct {
-	Name string `json:"name" yaml:"name"`
+	Name    string `json:"name" yaml:"name"`
+	DocLink string `json:"doc_link,omitempty" yaml:"doc_link,omitempty"`
 }
 
-func asPolicyRuleObj(rule policy.Rule) policyRuleObj {
+func asPolicyRuleObj(rule policy.Rule, docLink string) policyRuleObj {
 	return policyRuleObj{
-		Name: rule.Name,
+		Name:    rule.Name,
+		DocLink: docLink,
 	}
 }
 
@@ -27,7 +29,7 @@ type resultObj struct {
 func asResultObj(result result.Result) resultObj {
 	return resultObj{
 		Query:    result.Query,
-		Rule:     asPolicyRuleObj(result.Rule),
+		Rule:     asPolicyRuleObj(result.Rule, result.RuleDocLink),
 		Message:  result.Message,
 		Metadata: result.Metadata,
 	}

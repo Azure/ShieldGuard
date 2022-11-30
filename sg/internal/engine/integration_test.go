@@ -45,12 +45,14 @@ func Test_Integration_Basic(t *testing.T) {
 		assert.Equal(t, denyExcResult.Rule.Kind, policy.QueryKindDeny)
 		assert.Equal(t, denyExcResult.Rule.Name, "foo")
 		assert.Equal(t, denyExcResult.Rule.Namespace, "main")
+		assert.Equal(t, denyExcResult.RuleDocLink, "https://example.com/foo-deny-001-foo")
 
 		warnExcResult := queryResult.Exceptions[1]
 		assert.Equal(t, warnExcResult.Query, `data.main.exception[_][_] == "foo"`)
 		assert.Equal(t, warnExcResult.Rule.Kind, policy.QueryKindWarn)
 		assert.Equal(t, warnExcResult.Rule.Name, "foo")
 		assert.Equal(t, warnExcResult.Rule.Namespace, "main")
+		assert.Equal(t, warnExcResult.RuleDocLink, "https://example.com/foo-warn-001-foo")
 	}
 
 	assert.Len(t, queryResult.Warnings, 1, "one document emits warning")
@@ -61,6 +63,7 @@ func Test_Integration_Basic(t *testing.T) {
 		assert.Equal(t, warnResult.Rule.Kind, policy.QueryKindWarn)
 		assert.Equal(t, warnResult.Rule.Name, "foo")
 		assert.Equal(t, warnResult.Rule.Namespace, "main")
+		assert.Equal(t, warnResult.RuleDocLink, "https://example.com/foo-warn-001-foo")
 	}
 
 	assert.Len(t, queryResult.Failures, 1, "one document fails the test")
@@ -71,5 +74,6 @@ func Test_Integration_Basic(t *testing.T) {
 		assert.Equal(t, failureResult.Rule.Kind, policy.QueryKindDeny)
 		assert.Equal(t, failureResult.Rule.Name, "foo")
 		assert.Equal(t, failureResult.Rule.Namespace, "main")
+		assert.Equal(t, failureResult.RuleDocLink, "https://example.com/foo-deny-001-foo")
 	}
 }
