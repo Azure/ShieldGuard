@@ -27,6 +27,10 @@ vet: ## Run go vet against code.
 test: ## Run go test against code.
 	go test -race -v ./...
 
+lint: ## Run linters against code.
+	@./hack/golangci-lint.sh
+
+
 ##@ Build
 
 build: build-sg ## Build the project.
