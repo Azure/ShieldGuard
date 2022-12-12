@@ -3,9 +3,9 @@ module github.com/Azure/ShieldGuard/sg
 go 1.19
 
 require (
-	github.com/open-policy-agent/conftest v0.35.0
-	github.com/open-policy-agent/opa v0.45.0
-	github.com/stretchr/testify v1.8.0
+	github.com/open-policy-agent/conftest v0.36.0
+	github.com/open-policy-agent/opa v0.47.2
+	github.com/stretchr/testify v1.8.1
 )
 
 require (
@@ -50,8 +50,8 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	github.com/zclconf/go-cty v1.8.1 // indirect
-	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
