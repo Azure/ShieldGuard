@@ -15,6 +15,7 @@ require (
 	github.com/KeisukeYamashita/go-vcl v0.4.0 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
+	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/basgys/goxml2json v1.1.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.1 // indirect
@@ -26,6 +27,7 @@ require (
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-akka/configuration v0.0.0-20200606091224-a002c0330665 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
+	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-jsonnet v0.18.0 // indirect
@@ -42,9 +44,11 @@ require (
 	github.com/shteou/go-ignore v0.3.1 // indirect
 	github.com/spdx/tools-golang v0.2.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/tchap/go-patricia/v2 v2.3.1 // indirect
 	github.com/tmccombs/hcl2json v0.3.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
+	github.com/yashtewari/glob-intersection v0.1.0 // indirect
 	github.com/zclconf/go-cty v1.8.1 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
