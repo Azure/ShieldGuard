@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/open-policy-agent/conftest v0.36.0
-	github.com/open-policy-agent/opa v0.47.3
+	github.com/open-policy-agent/opa v0.47.4
 	github.com/stretchr/testify v1.8.1
 )
 
