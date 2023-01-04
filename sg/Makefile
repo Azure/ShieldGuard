@@ -30,6 +30,9 @@ test: ## Run go test against code.
 lint: ## Run linters against code.
 	@./hack/golangci-lint.sh
 
+tidy: ## Tidy go.mod and go.sum.
+	go mod tidy
+
 
 ##@ Build
 
