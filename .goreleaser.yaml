@@ -6,7 +6,8 @@ before:
   - bash -c 'cd sg; make tidy vet lint'
 
 builds:
-- env:
+- id: sg
+  env:
   - CGO_ENABLED=0
   goos:
   - linux
@@ -28,6 +29,14 @@ archives:
     linux: Linux
     windows: Windows
     amd64: x86_64
+
+blobs:
+# NOTE: we upload the binaries to here for internal usage.
+#       Will revise once we open source the project.
+- provider: azblob
+  endpoint: https://sgartifacts.blob.core.windows.net/
+  bucket: sg-release
+  ids: [sg]
 
 checksum:
   name_template: 'checksums.txt'
