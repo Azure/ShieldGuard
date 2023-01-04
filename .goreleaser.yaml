@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+project_name: ShieldGuard
+
+before:
+  hooks:
+  - bash -c 'cd sg; make tidy vet lint'
+
+builds:
+- env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  - windows
+  - darwin
+  dir: sg
+  main: ./cmd/sg
+  binary: sg
+  goarch:
+  - amd64
+
+release:
+  draft: true
+  replace_existing_draft: true
+
+archives:
+- replacements:
+    darwin: Darwin
+    linux: Linux
+    windows: Windows
+    amd64: x86_64
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^doc[s]?:'
+    - '^test:'

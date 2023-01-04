@@ -16,3 +16,5 @@
 
 # mac os
 .DS_Store
+
+dist/
