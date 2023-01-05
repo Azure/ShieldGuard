@@ -15,11 +15,54 @@ import (
 	"github.com/spf13/pflag"
 )
 
+type failSettings struct {
+	noFail         bool
+	failOnWarnings bool
+}
+
+func (s *failSettings) BindCLIFlags(fs *pflag.FlagSet) {
+	fs.BoolVar(
+		&s.failOnWarnings, "fail-on-warn", false,
+		"Fail the command if any query returns warnings.",
+	)
+	fs.BoolVar(
+		&s.noFail, "no-fail", false,
+		"Do not fail the command if any query fails. When specified to true, it suppress the --fail-on-warn flag.",
+	)
+}
+
+func (s *failSettings) CheckQueryResults(results []result.QueryResults) error {
+	if s.noFail {
+		return nil
+	}
+
+	countFailures := 0
+	countWarnings := 0
+	for _, result := range results {
+		countFailures += len(result.Failures)
+		countWarnings += len(result.Warnings)
+	}
+	if countFailures < 1 && countWarnings < 1 {
+		return nil
+	}
+
+	err := fmt.Errorf("found %d failure(s), %d warning(s)", countFailures, countWarnings)
+	if countFailures > 0 {
+		return err
+	}
+	if s.failOnWarnings && countWarnings > 0 {
+		return err
+	}
+
+	return nil
+}
+
 // cliApp is the CLI cliApplication for the test subcommand.
 type cliApp struct {
 	projectSpecFile string
 	contextRoot     string
 	outputFormat    string
+	failSettings    *failSettings
 
 	stdout io.Writer
 }
@@ -27,6 +70,7 @@ type cliApp struct {
 func newCliApp(ms ...func(*cliApp)) *cliApp {
 	rv := &cliApp{
 		outputFormat: presenter.FormatJSON,
+		failSettings: new(failSettings),
 	}
 
 	for _, m := range ms {
@@ -63,6 +107,10 @@ func (cliApp *cliApp) Run() error {
 		return fmt.Errorf("write query results: %w", err)
 	}
 
+	if err := cliApp.failSettings.CheckQueryResults(queryResultsList); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -72,6 +120,7 @@ func (cliApp *cliApp) BindCLIFlags(fs *pflag.FlagSet) {
 		&cliApp.outputFormat, "output", "o", cliApp.outputFormat,
 		fmt.Sprintf("Output format. Available formats: %s", presenter.AvailableFormatsHelp()),
 	)
+	cliApp.failSettings.BindCLIFlags(fs)
 }
 
 func (cliApp *cliApp) defaults() error {
