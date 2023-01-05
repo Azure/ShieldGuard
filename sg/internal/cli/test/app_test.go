@@ -95,6 +95,7 @@ func Test_failSettings_CheckQueryResults(t *testing.T) {
 			err := c.failSettings.CheckQueryResults(c.results)
 			if c.expectErr {
 				assert.Error(t, err)
+				assert.ErrorIs(t, err, errTestFailure)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -127,6 +128,7 @@ func Test_cliApp_basic(t *testing.T) {
 
 	runErr := cliApp.Run()
 	assert.Error(t, runErr, "cliApp run should return error")
+	assert.ErrorIs(t, runErr, errTestFailure)
 	assert.ErrorContains(t, runErr, "found 1 failure(s), 1 warning(s)")
 	assert.Equal(
 		t,

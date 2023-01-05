@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -14,6 +15,8 @@ import (
 	"github.com/Azure/ShieldGuard/sg/internal/utils"
 	"github.com/spf13/pflag"
 )
+
+var errTestFailure = errors.New("test failed")
 
 type failSettings struct {
 	noFail         bool
@@ -46,7 +49,10 @@ func (s *failSettings) CheckQueryResults(results []result.QueryResults) error {
 		return nil
 	}
 
-	err := fmt.Errorf("found %d failure(s), %d warning(s)", countFailures, countWarnings)
+	err := fmt.Errorf(
+		"%w: found %d failure(s), %d warning(s)",
+		errTestFailure, countFailures, countWarnings,
+	)
 	if countFailures > 0 {
 		return err
 	}
