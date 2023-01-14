@@ -105,6 +105,13 @@ func Test_cliApp_testdataTestSuites(t *testing.T) {
 				expectGoldenOutput("golden-output.json"),
 			},
 		},
+		{
+			Name: "bug25",
+			Checkers: []testSuiteRunCheckFunc{
+				expectRunErrorWith(1, 0),
+				expectGoldenOutput("golden-output.json"),
+			},
+		},
 	}
 
 	for idx := range testSuites {

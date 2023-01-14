@@ -1,0 +1,6 @@
+files:
+- name: bug-25
+  paths:
+  - configurations
+  policies:
+  - policy
