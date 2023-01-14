@@ -2,7 +2,7 @@
   {
     "filename": "configurations/data.json",
     "namespace": "main",
-    "success": 0,
+    "success": 2,
     "failures": [
       {
         "query": "data.main.deny_name",
@@ -10,6 +10,13 @@
           "name": "name"
         },
         "message": "foo is not allowed"
+      },
+      {
+        "query": "data.main.deny_name",
+        "rule": {
+          "name": "name"
+        },
+        "message": "value bar is not allowed"
       }
     ],
     "warnings": [],

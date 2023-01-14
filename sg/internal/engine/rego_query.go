@@ -78,7 +78,26 @@ func (engine *RegoEngine) queryPackage(
 	loadedConfiguration loadedConfiguration,
 	queryResult *result.QueryResults,
 ) error {
-	for _, rule := range policyPackage.Rules() {
+	// NOTE: because an rego query returns all failures for a given rule,
+	//       even if the rule is repeated with different bodies. Therefore,
+	//       we should only query the distinct rules. At the end, the total success
+	//       rules should be the count of total rules minus the query results plus
+	//       succeeded query results.
+
+	allRules := policyPackage.Rules()
+	distinctRules := make([]policy.Rule, 0, len(allRules))
+	rulesSet := make(map[string]struct{}, len(allRules))
+	for _, rule := range allRules {
+		primaryRuleKey := rule.Query()
+		if _, ok := rulesSet[primaryRuleKey]; ok {
+			// skip duplicate rules
+			continue
+		}
+		rulesSet[primaryRuleKey] = struct{}{}
+		distinctRules = append(distinctRules, rule)
+	}
+
+	for _, rule := range distinctRules {
 		if rule.Namespace != PackageMain {
 			// we only care about rules in the main package
 			continue
@@ -96,6 +115,11 @@ func (engine *RegoEngine) queryPackage(
 		); err != nil {
 			return fmt.Errorf("failed to query rule: %w", err)
 		}
+	}
+
+	resultsCount := queryResult.Successes + len(queryResult.Failures) + len(queryResult.Warnings) + len(queryResult.Exceptions)
+	if duplicatedRulesCount := len(allRules) - resultsCount; duplicatedRulesCount > 0 {
+		queryResult.Successes += duplicatedRulesCount
 	}
 
 	return nil
