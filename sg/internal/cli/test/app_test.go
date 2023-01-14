@@ -1,12 +1,10 @@
 package test
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/Azure/ShieldGuard/sg/internal/result"
@@ -103,38 +101,26 @@ func Test_failSettings_CheckQueryResults(t *testing.T) {
 	}
 }
 
-func resolveTestdataPath(t *testing.T, path string) string {
+func resolveTestdataPath(t *testing.T, paths ...string) string {
 	t.Helper()
-	absPath, err := filepath.Abs(path)
+	absPath, err := filepath.Abs(filepath.Join(paths...))
 	if err != nil {
 		t.Fatalf("resolve testdata path: %v", err)
 	}
 	return absPath
 }
 
-func withDebugOutput(w io.Writer) io.Writer {
-	return io.MultiWriter(w, os.Stderr)
+func defaults[T comparable](v T, defaultValue T) T {
+	var zeroValue T
+
+	if v == zeroValue {
+		return defaultValue
+	}
+	return v
 }
 
-func Test_cliApp_basic(t *testing.T) {
-	var output bytes.Buffer
-
-	cliApp := newCliApp(func(cliApp *cliApp) {
-		cliApp.contextRoot = resolveTestdataPath(t, "./testdata/basic")
-		cliApp.outputFormat = presenter.FormatJSON
-		cliApp.stdout = withDebugOutput(&output)
-		cliApp.projectSpecFile = resolveTestdataPath(t, "./testdata/basic/sg-project.yaml")
-	})
-
-	runErr := cliApp.Run()
-	assert.Error(t, runErr, "cliApp run should return error")
-	assert.ErrorIs(t, runErr, errTestFailure)
-	assert.ErrorContains(t, runErr, "found 1 failure(s), 1 warning(s)")
-	assert.Equal(
-		t,
-		testdataBasicJSONOutputGolden, strings.TrimSpace(output.String()),
-		"should generate expected output",
-	)
+func withDebugOutput(w io.Writer) io.Writer {
+	return io.MultiWriter(w, os.Stderr)
 }
 
 func Test_cliApp_defaults(t *testing.T) {
