@@ -35,6 +35,9 @@ type Rule struct {
 
 // Package defines the access methods to a policy package.
 type Package interface {
+	// Spec returns the package spec.
+	Spec() PackageSpec
+
 	// Rules lists all the rules in the package.
 	// NOTE: <Kind> + <Name> is the primary key to a rule query. Therefore, a rule (by name)
 	//       can be returned more than once.

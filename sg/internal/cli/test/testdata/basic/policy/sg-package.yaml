@@ -1,0 +1,2 @@
+rule:
+  doc_link: https://example.com/test-policy/{{.Name}}-{{.Kind}}-{{.SourceFileName}}

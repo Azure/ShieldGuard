@@ -89,7 +89,11 @@ func (engine *RegoEngine) queryPackage(
 			continue
 		}
 
-		if err := engine.queryRule(ctx, rule, loadedConfiguration, queryResult); err != nil {
+		if err := engine.queryRule(
+			ctx,
+			policyPackage, rule,
+			loadedConfiguration, queryResult,
+		); err != nil {
 			return fmt.Errorf("failed to query rule: %w", err)
 		}
 	}
@@ -97,12 +101,22 @@ func (engine *RegoEngine) queryPackage(
 	return nil
 }
 
+func resolveRuleDocLinkFn(policyPackage policy.Package) func(policy.Rule) (string, error) {
+	// TODO(hbc): cache resolved doc link by rule
+	return func(rule policy.Rule) (string, error) {
+		return policy.ResolveRuleDocLink(policyPackage.Spec(), rule)
+	}
+}
+
 func (engine *RegoEngine) queryRule(
 	ctx context.Context,
+	policyPackage policy.Package,
 	policyRule policy.Rule,
 	loadedConfiguration loadedConfiguration,
 	queryResult *result.QueryResults,
 ) error {
+	resolveRuleDocLink := resolveRuleDocLinkFn(policyPackage)
+
 	// execute exception query
 	exceptionQuery := fmt.Sprintf("data.%s.exception[_][_] == %q", PackageMain, policyRule.Name)
 	exceptions, err := engine.executeOneQuery(ctx, loadedConfiguration.Configuration, exceptionQuery)
@@ -123,6 +137,11 @@ func (engine *RegoEngine) queryRule(
 	if len(exceptions) > 0 {
 		for idx := range exceptions {
 			exceptions[idx].Rule = policyRule
+			docLink, err := resolveRuleDocLink(policyRule)
+			if err != nil {
+				return fmt.Errorf("resolve rule doc link failed: %w", err)
+			}
+			exceptions[idx].RuleDocLink = docLink
 		}
 		queryResult.Exceptions = append(queryResult.Exceptions, exceptions...)
 		return nil
@@ -135,6 +154,11 @@ func (engine *RegoEngine) queryRule(
 		}
 
 		result.Rule = policyRule
+		ruleDocLink, err := resolveRuleDocLink(policyRule)
+		if err != nil {
+			return fmt.Errorf("resolve rule doc link failed: %w", err)
+		}
+		result.RuleDocLink = ruleDocLink
 
 		switch {
 		case policyRule.IsKind(policy.QueryKindWarn):

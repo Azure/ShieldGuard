@@ -11,6 +11,8 @@ type Result struct {
 	Query string
 	// Rule is the rule executed by the query.
 	Rule policy.Rule
+	// RuleDocLink is the link to the documentation of the rule.
+	RuleDocLink string
 	// Message is the message that was returned by the rule.
 	Message string
 	// Metadata is the extra metadata that was returned by the rule.

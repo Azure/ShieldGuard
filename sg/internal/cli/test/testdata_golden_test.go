@@ -12,7 +12,8 @@ var testdataBasicJSONOutputGolden = strings.TrimSpace(`
       {
         "query": "data.main.deny_foo",
         "rule": {
-          "name": "foo"
+          "name": "foo",
+          "doc_link": "https://example.com/test-policy/foo-deny-001-foo"
         },
         "message": "name cannot be foo"
       }
@@ -21,7 +22,8 @@ var testdataBasicJSONOutputGolden = strings.TrimSpace(`
       {
         "query": "data.main.warn_foo",
         "rule": {
-          "name": "foo"
+          "name": "foo",
+          "doc_link": "https://example.com/test-policy/foo-warn-001-foo"
         },
         "message": "name is foo"
       }
@@ -30,14 +32,16 @@ var testdataBasicJSONOutputGolden = strings.TrimSpace(`
       {
         "query": "data.main.exception[_][_] == \"foo\"",
         "rule": {
-          "name": "foo"
+          "name": "foo",
+          "doc_link": "https://example.com/test-policy/foo-deny-001-foo"
         },
         "message": ""
       },
       {
         "query": "data.main.exception[_][_] == \"foo\"",
         "rule": {
-          "name": "foo"
+          "name": "foo",
+          "doc_link": "https://example.com/test-policy/foo-warn-001-foo"
         },
         "message": ""
       }
