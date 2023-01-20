@@ -44,8 +44,8 @@ type FileTargetSpec struct {
 //	 ? policies/policy-b
 //
 //	shared-policies-2: &shared-policies-2
-//	 ? policies/policy-a
-//	 ? policies/policy-b
+//	 ? policies/policy-c
+//	 ? policies/policy-d
 //
 //	files:
 //	 - name: project-a
