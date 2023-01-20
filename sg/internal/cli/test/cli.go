@@ -1,6 +1,10 @@
 package test
 
-import "github.com/spf13/cobra"
+import (
+	"errors"
+
+	"github.com/spf13/cobra"
+)
 
 // CreateCLI creates the CLI for the test subcommand.
 func CreateCLI() *cobra.Command {
@@ -14,7 +18,12 @@ func CreateCLI() *cobra.Command {
 			app.contextRoot = args[0]
 			app.stdout = cmd.OutOrStdout()
 
-			return app.Run()
+			appRunErr := app.Run()
+			if errors.Is(appRunErr, errTestFailure) {
+				// the test has ran and failed, but we don't want to show help message
+				cmd.SilenceUsage = true
+			}
+			return appRunErr
 		},
 	}
 
