@@ -108,7 +108,7 @@ func Test_cliApp_testdataTestSuites(t *testing.T) {
 		{
 			Name: "bug25",
 			Checkers: []testSuiteRunCheckFunc{
-				expectRunErrorWith(2, 0),
+				expectRunErrorWith(2, 1),
 				expectGoldenOutput("golden-output.json"),
 			},
 		},

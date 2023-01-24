@@ -1,4 +1,9 @@
-{
-  "name": "foo",
-  "value": "bar"
-}
+[
+  {
+    "name": "foo",
+    "value": "bar"
+  },
+  {
+    "name": "is-not-foo"
+  }
+]
