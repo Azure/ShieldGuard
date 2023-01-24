@@ -58,31 +58,34 @@ func (engine *RegoEngine) Query(
 		return result.QueryResults{}, fmt.Errorf("failed to load source: %w", err)
 	}
 
-	rv := result.QueryResults{
-		Source: source,
-	}
+	var aggregatedQueryResults result.QueryResults
 	for _, loadedConfiguration := range loadedConfigurations {
 		for _, policyPackage := range engine.policyPackages {
-			if err := engine.queryPackage(ctx, policyPackage, loadedConfiguration, &rv); err != nil {
+			queryResult, err := engine.queryPackage(ctx, policyPackage, loadedConfiguration)
+			if err != nil {
 				return result.QueryResults{}, err
 			}
+			aggregatedQueryResults = aggregatedQueryResults.Merge(queryResult)
 		}
 	}
 
-	return rv, nil
+	aggregatedQueryResults.Source = source
+
+	return aggregatedQueryResults, nil
 }
 
 func (engine *RegoEngine) queryPackage(
 	ctx context.Context,
 	policyPackage policy.Package,
 	loadedConfiguration loadedConfiguration,
-	queryResult *result.QueryResults,
-) error {
+) (result.QueryResults, error) {
 	// NOTE: because an rego query returns all failures for a given rule,
 	//       even if the rule is repeated with different bodies. Therefore,
 	//       we should only query the distinct rules. At the end, the total success
 	//       rules should be the count of total rules minus the query results plus
 	//       succeeded query results.
+
+	queryResult := result.QueryResults{}
 
 	allRules := policyPackage.Rules()
 	distinctRules := make([]policy.Rule, 0, len(allRules))
@@ -111,9 +114,9 @@ func (engine *RegoEngine) queryPackage(
 		if err := engine.queryRule(
 			ctx,
 			policyPackage, rule,
-			loadedConfiguration, queryResult,
+			loadedConfiguration, &queryResult,
 		); err != nil {
-			return fmt.Errorf("failed to query rule: %w", err)
+			return queryResult, fmt.Errorf("failed to query rule: %w", err)
 		}
 	}
 
@@ -122,7 +125,7 @@ func (engine *RegoEngine) queryPackage(
 		queryResult.Successes += duplicatedRulesCount
 	}
 
-	return nil
+	return queryResult, nil
 }
 
 func resolveRuleDocLinkFn(policyPackage policy.Package) func(policy.Rule) (string, error) {
