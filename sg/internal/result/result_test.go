@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Azure/ShieldGuard/sg/internal/source/testsource"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/stretchr/testify/assert"
 )
@@ -140,4 +141,49 @@ func Test_Result_Passed(t *testing.T) {
 
 	failed := Result{Message: "failed"}
 	assert.False(t, failed.Passed())
+}
+
+func Test_QueryResults_Merge(t *testing.T) {
+	left := QueryResults{
+		Source: &testsource.TestSource{
+			NameFunc: func() string {
+				return "left"
+			},
+		},
+		Successes: 10,
+		Failures: []Result{
+			{Message: "failed-left-1"},
+		},
+		Warnings: []Result{
+			{Message: "warn-left-1"},
+		},
+		Exceptions: []Result{
+			{Message: "exc-left-1"},
+		},
+	}
+	right := QueryResults{
+		Source: &testsource.TestSource{
+			NameFunc: func() string {
+				return "right"
+			},
+		},
+		Successes: 3,
+		Failures: []Result{
+			{Message: "failed-right-1"},
+			{Message: "failed-right-2"},
+		},
+		Warnings: []Result{
+			{Message: "warn-right-1"},
+		},
+		Exceptions: []Result{
+			{Message: "exc-right-1"},
+		},
+	}
+
+	merged := left.Merge(right)
+	assert.Equal(t, "left", merged.Source.Name())
+	assert.Equal(t, 13, merged.Successes)
+	assert.Len(t, merged.Failures, 3)
+	assert.Len(t, merged.Warnings, 2)
+	assert.Len(t, merged.Exceptions, 2)
 }

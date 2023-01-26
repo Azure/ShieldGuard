@@ -82,3 +82,15 @@ func FromRegoExpression(
 func (r Result) Passed() bool {
 	return r.Message == ""
 }
+
+// Merge merges two results into a new one.
+// The new result uses Source from the first result.
+func (qr QueryResults) Merge(other QueryResults) QueryResults {
+	return QueryResults{
+		Source:     qr.Source,
+		Successes:  qr.Successes + other.Successes,
+		Failures:   append(qr.Failures, other.Failures...),
+		Warnings:   append(qr.Warnings, other.Warnings...),
+		Exceptions: append(qr.Exceptions, other.Exceptions...),
+	}
+}

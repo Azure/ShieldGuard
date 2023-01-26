@@ -1,0 +1,33 @@
+[
+  {
+    "filename": "configurations/data.json",
+    "namespace": "main",
+    "success": 5,
+    "failures": [
+      {
+        "query": "data.main.deny_name",
+        "rule": {
+          "name": "name"
+        },
+        "message": "foo is not allowed"
+      },
+      {
+        "query": "data.main.deny_other",
+        "rule": {
+          "name": "other"
+        },
+        "message": "foo is not allowed"
+      }
+    ],
+    "warnings": [
+      {
+        "query": "data.main.warn_name",
+        "rule": {
+          "name": "name"
+        },
+        "message": "foo is not allowed"
+      }
+    ],
+    "exceptions": []
+  }
+]

@@ -58,27 +58,49 @@ func (engine *RegoEngine) Query(
 		return result.QueryResults{}, fmt.Errorf("failed to load source: %w", err)
 	}
 
-	rv := result.QueryResults{
-		Source: source,
-	}
+	var aggregatedQueryResults result.QueryResults
 	for _, loadedConfiguration := range loadedConfigurations {
 		for _, policyPackage := range engine.policyPackages {
-			if err := engine.queryPackage(ctx, policyPackage, loadedConfiguration, &rv); err != nil {
+			queryResult, err := engine.queryPackage(ctx, policyPackage, loadedConfiguration)
+			if err != nil {
 				return result.QueryResults{}, err
 			}
+			aggregatedQueryResults = aggregatedQueryResults.Merge(queryResult)
 		}
 	}
 
-	return rv, nil
+	aggregatedQueryResults.Source = source
+
+	return aggregatedQueryResults, nil
 }
 
 func (engine *RegoEngine) queryPackage(
 	ctx context.Context,
 	policyPackage policy.Package,
 	loadedConfiguration loadedConfiguration,
-	queryResult *result.QueryResults,
-) error {
-	for _, rule := range policyPackage.Rules() {
+) (result.QueryResults, error) {
+	// NOTE: because an rego query returns all failures for a given rule,
+	//       even if the rule is repeated with different bodies. Therefore,
+	//       we should only query the distinct rules. At the end, the total success
+	//       rules should be the count of total rules minus the query results plus
+	//       succeeded query results.
+
+	queryResult := result.QueryResults{}
+
+	allRules := policyPackage.Rules()
+	distinctRules := make([]policy.Rule, 0, len(allRules))
+	rulesSet := make(map[string]struct{}, len(allRules))
+	for _, rule := range allRules {
+		primaryRuleKey := rule.Query()
+		if _, ok := rulesSet[primaryRuleKey]; ok {
+			// skip duplicate rules
+			continue
+		}
+		rulesSet[primaryRuleKey] = struct{}{}
+		distinctRules = append(distinctRules, rule)
+	}
+
+	for _, rule := range distinctRules {
 		if rule.Namespace != PackageMain {
 			// we only care about rules in the main package
 			continue
@@ -92,13 +114,18 @@ func (engine *RegoEngine) queryPackage(
 		if err := engine.queryRule(
 			ctx,
 			policyPackage, rule,
-			loadedConfiguration, queryResult,
+			loadedConfiguration, &queryResult,
 		); err != nil {
-			return fmt.Errorf("failed to query rule: %w", err)
+			return queryResult, fmt.Errorf("failed to query rule: %w", err)
 		}
 	}
 
-	return nil
+	resultsCount := queryResult.Successes + len(queryResult.Failures) + len(queryResult.Warnings) + len(queryResult.Exceptions)
+	if duplicatedRulesCount := len(allRules) - resultsCount; duplicatedRulesCount > 0 {
+		queryResult.Successes += duplicatedRulesCount
+	}
+
+	return queryResult, nil
 }
 
 func resolveRuleDocLinkFn(policyPackage policy.Package) func(policy.Rule) (string, error) {
