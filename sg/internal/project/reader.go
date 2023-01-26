@@ -29,7 +29,7 @@ func ReadFromYAML(src io.Reader) (Spec, error) {
 
 	var rv Spec
 	if err := json.Unmarshal(resolvedJSON, &rv); err != nil {
-		return Spec{}, fmt.Errorf("decode yaml: %w", err)
+		return Spec{}, fmt.Errorf("decode json: %w", err)
 	}
 
 	return rv, nil
