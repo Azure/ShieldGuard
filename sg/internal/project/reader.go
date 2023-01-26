@@ -1,6 +1,7 @@
 package project
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -10,11 +11,25 @@ import (
 
 // ReadFromYAML reads a project specification from YAML.
 func ReadFromYAML(src io.Reader) (Spec, error) {
-	rv := Spec{}
+	// NOTE: since we want to support YAML anchors and mixing string list and string map,
+	//       therefore, we firstly use yaml.Decoder to resolve the anchors and encode
+	//       the spec to a untyped object. Then, we use json.Unmarshal to decode the resolved
+	//       values. Finally, the mixed string list and string map will be decoded via strListOrMap.
 
-	dec := yaml.NewDecoder(src)
-	if err := dec.Decode(&rv); err != nil {
+	var untypedObj any
+	yamlDecoder := yaml.NewDecoder(src)
+	if err := yamlDecoder.Decode(&untypedObj); err != nil {
 		return Spec{}, fmt.Errorf("decode yaml: %w", err)
+	}
+
+	resolvedJSON, err := json.Marshal(untypedObj)
+	if err != nil {
+		return Spec{}, fmt.Errorf("resolve to json: %w", err)
+	}
+
+	var rv Spec
+	if err := json.Unmarshal(resolvedJSON, &rv); err != nil {
+		return Spec{}, fmt.Errorf("decode json: %w", err)
 	}
 
 	return rv, nil
