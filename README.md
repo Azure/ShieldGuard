@@ -59,7 +59,7 @@ We decided to build a new tool based on following reasons:
 
 [MIT](/LICENSE)
 
-## Trademarks
+### Trademarks
 
 This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
 trademarks or logos is subject to and must follow 
