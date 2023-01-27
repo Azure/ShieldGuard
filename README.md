@@ -1,5 +1,9 @@
 # ShieldGuard
 
+ShieldGuard enables best security practices for your project from day zero.
+ShieldGuard is a **modular tool** and a **process** for enforcing various kind of validations on structured data. These data can be
+the JSON/YAML/TOML/XML/... configurations from project source code, or the runtime data from your production environments.
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
