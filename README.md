@@ -9,11 +9,11 @@ the JSON/YAML/TOML/XML/... configurations from project source code, or the runti
 
 ## Quick Start
 
-Get ShieldGuard running in 5 minutes: [./docs/manual/get-started.md]()
+Get ShieldGuard running in 5 minutes: [./docs/manual/get-started.md](/docs/manual/get-started.md)
 
 ## Documentations
 
-Interested to more usage scenarios? Checkout [./docs/manual]() for more examples!
+Interested to more usage scenarios? Checkout [./docs/manual](/docs/manual/) for more examples!
 
 ### Contributing
 
@@ -29,11 +29,11 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-For step by step development setup & contribution guides, please see [./docs/dev]() folder.
+For step by step development setup & contribution guides, please see [./docs/dev](/docs/dev/) folder.
 
 ### Security
 
-Please follow [SECURITY.md]() to report security issues.
+Please follow [SECURITY.md](/SECURITY.md) to report security issues.
 
 ## History
 
@@ -57,7 +57,7 @@ We decided to build a new tool based on following reasons:
 
 ## License
 
-[MIT][./LICENSE]
+[MIT](/LICENSE)
 
 ## Trademarks
 
