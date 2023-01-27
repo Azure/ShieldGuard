@@ -35,7 +35,7 @@ For step by step development setup & contribution guides, please see [./docs/dev
 
 Please follow [SECURITY.md](/SECURITY.md) to report security issues.
 
-## History
+## History and Why
 
 ShieldGuard is a based on [Open Policy Agent (OPA)][opa] and heavily inspired by:
 
