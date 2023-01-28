@@ -55,7 +55,7 @@ In this tutorial, we will validate if a Kubernetes deployment spec is setting a 
 
 The full sample and code can be found from [./samples/001-get-started](./samples/001-get-started).
 
-### Bootstrap Policy Project
+### Bootstrapping Project
 
 In ShieldGuard, policies and data are organized into a `project`: each project contains *one ore more data targets*  and *zero or more policies*. These mappings are defined with `sg-project.yaml`.
 
