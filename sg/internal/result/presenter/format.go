@@ -14,7 +14,7 @@ const (
 // AvailableFormats book-keeps the available formats.
 var AvailableFormats = map[string]struct{}{
 	FormatJSON: {},
-	FormatText: {}
+	FormatText: {},
 }
 
 // AvailableFormatsHelp returns help message for available formats.
@@ -35,7 +35,7 @@ func QueryResultsList(
 	case FormatJSON:
 		return JSON(queryResultsList)
 	case FormatText:
-		return Text(queryResultsList)	
+		return Text(queryResultsList)
 	default:
 		// defaults to JSON
 		return JSON(queryResultsList)
