@@ -1,6 +1,11 @@
-# ShieldGuard
+<div align="center">
+<!-- TODO: logo -->
+<h1>ShieldGuard</h1>
+<p>Enables best security practices for your project from day zero.</p>
 
-ShieldGuard enables best security practices for your project from day zero.
+[![Unit Test](https://github.com/Azure/ShieldGuard/actions/workflows/unit-test.yaml/badge.svg)](https://github.com/Azure/ShieldGuard/actions/workflows/unit-test.yaml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Azure/ShieldGuard/sg.svg)](https://pkg.go.dev/github.com/Azure/ShieldGuard/sg)
+</div>
 
 ## What's ShieldGuard?
 
