@@ -1,0 +1,6 @@
+files:
+- name: 001-get-started
+  paths:
+  - data
+  policies:
+  - policy
