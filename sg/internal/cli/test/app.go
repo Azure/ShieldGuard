@@ -100,16 +100,16 @@ func (cliApp *cliApp) Run() error {
 	}
 
 	if projectSpec.Files == nil || len(projectSpec.Files) == 0 {
-		return fmt.Errorf("'files' is not corretly spelled, resulting a non-standard format")
+		return fmt.Errorf("'files' is not correctly spelled, resulting in a non-standard format")
 	}
 
 	var queryResultsList []result.QueryResults
 	for _, target := range projectSpec.Files {
 		if target.Paths == nil || len(target.Paths) == 0 {
-			return fmt.Errorf("'paths' is not corretly spelled, resulting a non-standard format")
+			return fmt.Errorf("'paths' is not correctly spelled, resulting in a non-standard format")
 		}
 		if target.Policies == nil || len(target.Policies) == 0 {
-			return fmt.Errorf("'policies' is not corretly spelled, resulting a non-standard format")
+			return fmt.Errorf("'policies' is not correctly spelled, resulting in a non-standard format")
 		}
 		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target)
 		if err != nil {
