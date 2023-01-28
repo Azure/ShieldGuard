@@ -185,7 +185,7 @@ As we can see, `sg` failed because of the postgres deployment is missing the req
 We can fix it by adding the label:
 
 ```
-cat <<EOF > 001-get-started/data/postgres-app-deployment.yaml
+$ cat <<EOF > 001-get-started/data/postgres-app-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
