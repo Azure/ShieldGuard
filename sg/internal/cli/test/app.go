@@ -99,18 +99,12 @@ func (cliApp *cliApp) Run() error {
 		return fmt.Errorf("read project spec: %w", err)
 	}
 
-	if projectSpec.Files == nil || len(projectSpec.Files) == 0 {
-		return fmt.Errorf("'files' is not correctly spelled, resulting in a non-standard format")
+	if err := projectSpec.Validate(); err != nil {
+		return fmt.Errorf("project spec validation failed: %w", err)
 	}
 
 	var queryResultsList []result.QueryResults
 	for _, target := range projectSpec.Files {
-		if target.Paths == nil || len(target.Paths) == 0 {
-			return fmt.Errorf("'paths' is not correctly spelled, resulting in a non-standard format")
-		}
-		if target.Policies == nil || len(target.Policies) == 0 {
-			return fmt.Errorf("'policies' is not correctly spelled, resulting in a non-standard format")
-		}
 		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target)
 		if err != nil {
 			return fmt.Errorf("run target (%s): %w", target.Name, err)
