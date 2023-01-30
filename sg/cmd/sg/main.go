@@ -19,7 +19,7 @@ func main() {
 func createMainCmd() *cobra.Command {
 	rv := &cobra.Command{
 		Use:               "sg",
-		Short:             "ShieldGuard secures your code from day one.",
+		Short:             "Enables best security practices for your project from day zero.",
 		CompletionOptions: cobra.CompletionOptions{DisableDefaultCmd: true},
 	}
 
