@@ -8,11 +8,13 @@ import (
 
 const (
 	FormatJSON = "json"
+	FormatText = "text"
 )
 
 // AvailableFormats book-keeps the available formats.
 var AvailableFormats = map[string]struct{}{
 	FormatJSON: {},
+	FormatText: {},
 }
 
 // AvailableFormatsHelp returns help message for available formats.
@@ -32,6 +34,8 @@ func QueryResultsList(
 	switch strings.ToLower(format) {
 	case FormatJSON:
 		return JSON(queryResultsList)
+	case FormatText:
+		return Text(queryResultsList)
 	default:
 		// defaults to JSON
 		return JSON(queryResultsList)
