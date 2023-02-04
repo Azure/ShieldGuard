@@ -2,6 +2,6 @@
 
 HostPorts should be disallowed entirely (recommended) or restricted to a known list.
 
-This policy requires strict controls and monitoring to ensure that host system network ports do not pose a security threat.
+Access to host port would present potential security risks. This policy would restrict the use of host port entirely or to a known list.
 
 [Notes](https://kubernetes.io/docs/concepts/security/pod-security-standards/#:~:text=Undefined/nil-,Host%20Ports,-HostPorts%20should%20be)

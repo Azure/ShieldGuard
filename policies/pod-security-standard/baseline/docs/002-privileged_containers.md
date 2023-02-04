@@ -2,6 +2,6 @@
 
 Privileged Pods disable most security mechanisms and must be disallowed.
 
-This policy provides a way to run containers with elevated privileges and access to the host system, but also requires strict controls and monitoring to ensure that these containers do not pose a security threat.
+This policy prevents the pods from running in privileged mode which would have provided host resources and kernel capabilities that pose a security threat.
 
 [Notes](https://kubernetes.io/docs/concepts/security/pod-security-standards/#:~:text=Privileged%20Containers)
