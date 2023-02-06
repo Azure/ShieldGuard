@@ -2,7 +2,6 @@ package presenter
 
 import (
 	"fmt"
-
 	"io"
 
 	"github.com/Azure/ShieldGuard/sg/internal/result"
@@ -12,6 +11,27 @@ import (
 func Text(queryResultsList []result.QueryResults) WriteQueryResultTo {
 	queryResultsObjList := asQueryResultsObjList(queryResultsList)
 
+	printQueryResultObj := func(
+		w io.Writer,
+		category string,
+		filename string,
+		o resultObj,
+		printDocumentLink bool,
+	) {
+		fmt.Fprintf(
+			w,
+			"%s - %s - %s\n",
+			category, filename, o.Message,
+		)
+		if printDocumentLink && o.Rule.DocLink != "" {
+			fmt.Fprintf(
+				w,
+				"Document: %s\n",
+				o.Rule.DocLink,
+			)
+		}
+	}
+
 	return writeQueryResultToFunc(func(w io.Writer) error {
 		var totalTests int
 		var totalPasses int
@@ -19,7 +39,7 @@ func Text(queryResultsList []result.QueryResults) WriteQueryResultTo {
 		var totalWarnings int
 		var totalExceptions int
 
-		for _, queryResultObj := range queryResultsObjList { // TODO: maybe we should sort & group results before iterating them
+		for _, queryResultObj := range queryResultsObjList {
 			totalPasses += queryResultObj.Success
 
 			totalFailures += len(queryResultObj.Failures)
@@ -28,19 +48,23 @@ func Text(queryResultsList []result.QueryResults) WriteQueryResultTo {
 
 			totalExceptions += len(queryResultObj.Exceptions)
 
-			for _, failureResultObj := range queryResultObj.Failures {
-				fmt.Fprintf(w, "FAIL - %s - %s - %s\n", queryResultObj.Filename, queryResultObj.Namespace, failureResultObj.Message)
+			for _, o := range queryResultObj.Failures {
+				printQueryResultObj(w, "FAIL", queryResultObj.Filename, o, true)
 			}
-			for _, warningResultObj := range queryResultObj.Warnings {
-				fmt.Fprintf(w, "WARN - %s - %s - %s\n", queryResultObj.Filename, queryResultObj.Namespace, warningResultObj.Message)
+			for _, o := range queryResultObj.Warnings {
+				printQueryResultObj(w, "WARN", queryResultObj.Filename, o, true)
 			}
-			for _, exceptionResultObj := range queryResultObj.Exceptions {
-				fmt.Fprintf(w, "EXCEPTION - %s - %s - %s\n", queryResultObj.Filename, queryResultObj.Namespace, exceptionResultObj.Message)
+			for _, o := range queryResultObj.Exceptions {
+				printQueryResultObj(w, "EXCEPTION", queryResultObj.Filename, o, false)
 			}
 		}
 
 		totalTests = totalPasses + totalFailures + totalWarnings + totalExceptions
-		fmt.Fprintf(w, "%d tests, %d passed, %d failures %d warnings, %d exceptions\n", totalTests, totalPasses, totalFailures, totalWarnings, totalExceptions)
+		fmt.Fprintf(
+			w,
+			"%d test(s), %d passed, %d failure(s) %d warning(s), %d exception(s)\n",
+			totalTests, totalPasses, totalFailures, totalWarnings, totalExceptions,
+		)
 
 		return nil
 	})
