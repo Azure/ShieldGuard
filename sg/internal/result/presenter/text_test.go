@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/b4fun/ci"
+	"github.com/b4fun/ci/cilog"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Text(t *testing.T) {
-	presenter := Text(testQueryResults())
+func Test_plainText(t *testing.T) {
+	presenter := plainText(testQueryResults())
 	output := new(bytes.Buffer)
 	err := presenter.WriteQueryResultTo(output)
 	assert.NoError(t, err)
@@ -28,4 +30,13 @@ EXCEPTION - file name - (003-rule)
 `,
 		output.String(),
 	)
+}
+
+func Test_ciText(t *testing.T) {
+	presenter := ciText(cilog.Get(ci.GithubActions), testQueryResults())
+	output := new(bytes.Buffer)
+	err := presenter.WriteQueryResultTo(output)
+	assert.NoError(t, err)
+
+	// NOTE: CI output prints to stdout directly, so we don't test the output here
 }
