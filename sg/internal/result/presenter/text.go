@@ -135,7 +135,8 @@ func ciText(logger cilog.Logger, queryResultsList []result.QueryResults) WriteQu
 				excLogger := logger
 				endGroup := func() {}
 				if cilog.Can(logger, cilog.CapabilityGroupLog) {
-					excLogger, endGroup = logger.GroupLog(cilog.GroupLogParams{Name: "EXCEPTIONS"})
+					groupName := fmt.Sprintf("EXCEPTIONS (%d)", len(queryResultObj.Exceptions))
+					excLogger, endGroup = logger.GroupLog(cilog.GroupLogParams{Name: groupName})
 				}
 				for _, o := range queryResultObj.Exceptions {
 					printQueryResultObj(excLogger.Log, "EXCEPTION", queryResultObj.Filename, o, false)
