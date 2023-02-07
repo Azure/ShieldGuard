@@ -158,8 +158,10 @@ func ciText(logger cilog.Logger, queryResultsList []result.QueryResults) WriteQu
 // Text creates a new text presenter.
 func Text(queryResultsList []result.QueryResults) WriteQueryResultTo {
 	switch name := ci.Detect(); name {
-	case ci.GithubActions, ci.AzurePipelines:
+	case ci.GithubActions:
 		return ciText(cilog.Get(name), queryResultsList)
+	case ci.AzurePipelines:
+		return ciText(cilog.AzurePipeline(cilog.AzurePipelineUseLogIssue(true)), queryResultsList)
 	default:
 		return plainText(queryResultsList)
 	}
