@@ -18,10 +18,17 @@ func Text(queryResultsList []result.QueryResults) WriteQueryResultTo {
 		o resultObj,
 		printDocumentLink bool,
 	) {
+		var messageDetails string
+		if o.Message == "" {
+			messageDetails = fmt.Sprintf("(%s)", o.Rule.Name)
+		} else {
+			messageDetails = fmt.Sprintf("%s (%s)", o.Message, o.Rule.Name)
+		}
+
 		fmt.Fprintf(
 			w,
 			"%s - %s - %s\n",
-			category, filename, o.Message,
+			category, filename, messageDetails,
 		)
 		if printDocumentLink && o.Rule.DocLink != "" {
 			fmt.Fprintf(
