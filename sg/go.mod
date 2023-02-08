@@ -3,7 +3,7 @@ module github.com/Azure/ShieldGuard/sg
 go 1.19
 
 require (
-	github.com/b4fun/ci v0.2.0
+	github.com/b4fun/ci v0.3.0
 	github.com/open-policy-agent/conftest v0.38.0
 	github.com/open-policy-agent/opa v0.48.0
 	github.com/spf13/cobra v1.6.1
