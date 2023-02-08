@@ -75,20 +75,26 @@ func Text(queryResultsList []result.QueryResults) WriteQueryResultTo {
 			totalPasses += queryResultObj.Success
 
 			for _, o := range queryResultObj.Failures {
+				o := o
+				fileName := queryResultObj.Filename
 				failures = append(failures, func(l cilog.Logger) {
-					printResultObj(logger, categoryFAIL, queryResultObj.Filename, o)
+					printResultObj(logger, categoryFAIL, fileName, o)
 					printDocumentLink(logger, o.Rule.DocLink)
 				})
 			}
 			for _, o := range queryResultObj.Warnings {
+				o := o
+				fileName := queryResultObj.Filename
 				warnings = append(warnings, func(l cilog.Logger) {
-					printResultObj(logger, categoryWARNING, queryResultObj.Filename, o)
+					printResultObj(logger, categoryWARNING, fileName, o)
 					printDocumentLink(logger, o.Rule.DocLink)
 				})
 			}
 			for _, o := range queryResultObj.Exceptions {
+				o := o
+				fileName := queryResultObj.Filename
 				exceptions = append(exceptions, func(l cilog.Logger) {
-					printResultObj(logger, categoryEXCEPTION, queryResultObj.Filename, o)
+					printResultObj(logger, categoryEXCEPTION, fileName, o)
 				})
 			}
 		}
