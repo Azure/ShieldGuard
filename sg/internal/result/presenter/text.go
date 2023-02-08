@@ -9,160 +9,112 @@ import (
 	"github.com/b4fun/ci/cilog"
 )
 
-func plainText(queryResultsList []result.QueryResults) WriteQueryResultTo {
+// Text creates a new text presenter.
+func Text(queryResultsList []result.QueryResults) WriteQueryResultTo {
+	const (
+		categoryFAIL      = "FAIL"
+		categoryWARNING   = "WARNING"
+		categoryEXCEPTION = "EXCEPTION"
+	)
+
 	queryResultsObjList := asQueryResultsObjList(queryResultsList)
 
-	printQueryResultObj := func(
-		w io.Writer,
-		category string,
-		filename string,
-		o resultObj,
-		printDocumentLink bool,
-	) {
-		var messageDetails string
-		if o.Message == "" {
-			messageDetails = fmt.Sprintf("(%s)", o.Rule.Name)
-		} else {
-			messageDetails = fmt.Sprintf("%s (%s)", o.Message, o.Rule.Name)
-		}
-
-		fmt.Fprintf(
-			w,
-			"%s - %s - %s\n",
-			category, filename, messageDetails,
-		)
-		if printDocumentLink && o.Rule.DocLink != "" {
-			fmt.Fprintf(
-				w,
-				"Document: %s\n",
-				o.Rule.DocLink,
-			)
-		}
+	var logger cilog.Logger
+	switch name := ci.Detect(); name {
+	case ci.AzurePipelines:
+		// we use LogIssue in Azure pipelines to prompt the error in build details.
+		logger = cilog.AzurePipeline(cilog.AzurePipelineUseLogIssue(true))
+	default:
+		logger = cilog.Get(name)
 	}
 
-	return writeQueryResultToFunc(func(w io.Writer) error {
-		var (
-			totalTests      int
-			totalPasses     int
-			totalFailures   int
-			totalWarnings   int
-			totalExceptions int
-		)
-
-		for _, queryResultObj := range queryResultsObjList {
-			totalPasses += queryResultObj.Success
-			totalFailures += len(queryResultObj.Failures)
-			totalWarnings += len(queryResultObj.Warnings)
-			totalExceptions += len(queryResultObj.Exceptions)
-
-			for _, o := range queryResultObj.Failures {
-				printQueryResultObj(w, "FAIL", queryResultObj.Filename, o, true)
-			}
-			for _, o := range queryResultObj.Warnings {
-				printQueryResultObj(w, "WARN", queryResultObj.Filename, o, true)
-			}
-			for _, o := range queryResultObj.Exceptions {
-				printQueryResultObj(w, "EXCEPTION", queryResultObj.Filename, o, false)
-			}
-		}
-
-		totalTests = totalPasses + totalFailures + totalWarnings + totalExceptions
-		fmt.Fprintf(
-			w,
-			"%d test(s), %d passed, %d failure(s) %d warning(s), %d exception(s)\n",
-			totalTests, totalPasses, totalFailures, totalWarnings, totalExceptions,
-		)
-
-		return nil
-	})
-}
-
-func ciText(logger cilog.Logger, queryResultsList []result.QueryResults) WriteQueryResultTo {
-	queryResultsObjList := asQueryResultsObjList(queryResultsList)
-
-	printQueryResultObj := func(
-		println func(s string),
+	printResultObj := func(
+		logger cilog.Logger,
 		category string,
 		filename string,
 		o resultObj,
-		printDocumentLink bool,
 	) {
 		var messageDetails string
 		if o.Message == "" {
 			messageDetails = fmt.Sprintf("(%s)", o.Rule.Name)
 		} else {
-			messageDetails = fmt.Sprintf("%s (%s)", o.Message, o.Rule.Name)
+			messageDetails = fmt.Sprintf("(%s) %s", o.Rule.Name, o.Message)
+		}
+
+		println := logger.Log
+		switch category {
+		case categoryFAIL:
+			println = func(s string) { cilog.Error(logger, s) }
+		case categoryWARNING:
+			println = func(s string) { cilog.Warning(logger, s) }
 		}
 
 		println(fmt.Sprintf("%s - %s - %s", category, filename, messageDetails))
-		if printDocumentLink && o.Rule.DocLink != "" {
-			println(fmt.Sprintf("Document: %s", o.Rule.DocLink))
+	}
+
+	printDocumentLink := func(logger cilog.Logger, docLink string) {
+		if docLink == "" {
+			return
 		}
+		logger.Log(fmt.Sprintf("Document: %s", docLink))
 	}
 
 	return writeQueryResultToFunc(func(w io.Writer) error {
+		logger.SetOutput(w)
+
 		var (
-			totalTests      int
-			totalPasses     int
-			totalFailures   int
-			totalWarnings   int
-			totalExceptions int
+			totalTests  int
+			totalPasses int
+
+			failures   []func(cilog.Logger)
+			warnings   []func(cilog.Logger)
+			exceptions []func(cilog.Logger)
 		)
 
 		for _, queryResultObj := range queryResultsObjList {
 			totalPasses += queryResultObj.Success
-			totalFailures += len(queryResultObj.Failures)
-			totalWarnings += len(queryResultObj.Warnings)
-			totalExceptions += len(queryResultObj.Exceptions)
-
-			printFailures := logger.Log
-			if cilog.Can(logger, cilog.CapabilityErrorLog) {
-				printFailures = logger.ErrorLog
-			}
-			printWarnings := logger.Log
-			if cilog.Can(logger, cilog.CapabilityWarningLog) {
-				printWarnings = logger.WarningLog
-			}
 
 			for _, o := range queryResultObj.Failures {
-				printQueryResultObj(printFailures, "FAIL", queryResultObj.Filename, o, true)
+				failures = append(failures, func(l cilog.Logger) {
+					printResultObj(logger, categoryFAIL, queryResultObj.Filename, o)
+					printDocumentLink(logger, o.Rule.DocLink)
+				})
 			}
 			for _, o := range queryResultObj.Warnings {
-				printQueryResultObj(printWarnings, "WARN", queryResultObj.Filename, o, true)
+				warnings = append(warnings, func(l cilog.Logger) {
+					printResultObj(logger, categoryWARNING, queryResultObj.Filename, o)
+					printDocumentLink(logger, o.Rule.DocLink)
+				})
 			}
-
-			if len(queryResultObj.Exceptions) > 0 {
-				excLogger := logger
-				endGroup := func() {}
-				if cilog.Can(logger, cilog.CapabilityGroupLog) {
-					groupName := fmt.Sprintf("EXCEPTIONS (%d)", len(queryResultObj.Exceptions))
-					excLogger, endGroup = logger.GroupLog(cilog.GroupLogParams{Name: groupName})
-				}
-				for _, o := range queryResultObj.Exceptions {
-					printQueryResultObj(excLogger.Log, "EXCEPTION", queryResultObj.Filename, o, false)
-				}
-				endGroup()
+			for _, o := range queryResultObj.Exceptions {
+				exceptions = append(exceptions, func(l cilog.Logger) {
+					printResultObj(logger, categoryEXCEPTION, queryResultObj.Filename, o)
+				})
 			}
 		}
 
-		totalTests = totalPasses + totalFailures + totalWarnings + totalExceptions
+		for _, cb := range failures {
+			cb(logger)
+		}
+		for _, cb := range warnings {
+			cb(logger)
+		}
+		if c := len(exceptions); c > 0 {
+			groupName := fmt.Sprintf("EXCEPTIONS (%d)", c)
+			excLogger, endExc := cilog.Group(logger, cilog.GroupLogParams{Name: groupName})
+			for _, cb := range exceptions {
+				cb(excLogger)
+			}
+
+			endExc()
+		}
+
+		totalTests = totalPasses + len(failures) + len(warnings) + len(exceptions)
 		logger.Log(fmt.Sprintf(
 			"%d test(s), %d passed, %d failure(s) %d warning(s), %d exception(s)",
-			totalTests, totalPasses, totalFailures, totalWarnings, totalExceptions,
+			totalTests, totalPasses, len(failures), len(warnings), len(exceptions),
 		))
 
 		return nil
 	})
-}
-
-// Text creates a new text presenter.
-func Text(queryResultsList []result.QueryResults) WriteQueryResultTo {
-	switch name := ci.Detect(); name {
-	case ci.GithubActions:
-		return ciText(cilog.Get(name), queryResultsList)
-	case ci.AzurePipelines:
-		return ciText(cilog.AzurePipeline(cilog.AzurePipelineUseLogIssue(true)), queryResultsList)
-	default:
-		return plainText(queryResultsList)
-	}
 }
