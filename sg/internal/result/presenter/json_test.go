@@ -32,7 +32,8 @@ func Test_JSON(t *testing.T) {
 				{
 				  "query": "",
 				  "rule": {
-					"name": ""
+					"name": "002-rule",
+					"doc_link": "https://github.com/Azure/ShieldGuard/docs/002-rego.md"
 				  },
 				  "message": "fail message2"
 				}
@@ -41,14 +42,15 @@ func Test_JSON(t *testing.T) {
 				{
 				  "query": "",
 				  "rule": {
-					"name": ""
+					"name": "001-rule",
+					"doc_link": "https://github.com/Azure/ShieldGuard/docs/001-rego.md"
 				  },
 				  "message": "warn message1"
 				},
 				{
 				  "query": "",
 				  "rule": {
-					"name": "",
+					"name": "002-rule",
 					"doc_link": "https://github.com/Azure/ShieldGuard/docs/002-rego.md"
 				  },
 				  "message": "warn message2"
@@ -58,9 +60,10 @@ func Test_JSON(t *testing.T) {
 				{
 				  "query": "",
 				  "rule": {
-					"name": ""
+					"name": "003-rule",
+					"doc_link": "https://github.com/Azure/ShieldGuard/docs/003-rego.md"
 				  },
-				  "message": "exception message1"
+				  "message": ""
 				}
 			  ]
 			},
@@ -72,8 +75,7 @@ func Test_JSON(t *testing.T) {
 			  "warnings": [],
 			  "exceptions": []
 			}
-		  ]
-		  `,
+		  ]`,
 		output.String(),
 	)
 }

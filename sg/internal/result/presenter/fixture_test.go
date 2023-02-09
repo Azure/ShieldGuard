@@ -15,23 +15,50 @@ func testQueryResults() []result.QueryResults {
 			Successes: 2,
 			Failures: []result.Result{
 				{
-					RuleDocLink: "https://github.com/Azure/ShieldGuard/docs/001-rego.md",
 					Message:     "fail message1",
+					RuleDocLink: "https://github.com/Azure/ShieldGuard/docs/001-rego.md",
 					Rule: policy.Rule{
 						Kind: policy.QueryKindDeny,
 						Name: "001-rule",
 					},
 				},
-				{Message: "fail message2"},
-			},
-			Warnings: []result.Result{
-				{Message: "warn message1"},
 				{
+					Message:     "fail message2",
 					RuleDocLink: "https://github.com/Azure/ShieldGuard/docs/002-rego.md",
-					Message:     "warn message2",
+					Rule: policy.Rule{
+						Kind: policy.QueryKindDeny,
+						Name: "002-rule",
+					},
 				},
 			},
-			Exceptions: []result.Result{{Message: "exception message1"}},
+			Warnings: []result.Result{
+				{
+					Message:     "warn message1",
+					RuleDocLink: "https://github.com/Azure/ShieldGuard/docs/001-rego.md",
+					Rule: policy.Rule{
+						Kind: policy.QueryKindWarn,
+						Name: "001-rule",
+					},
+				},
+				{
+					Message:     "warn message2",
+					RuleDocLink: "https://github.com/Azure/ShieldGuard/docs/002-rego.md",
+					Rule: policy.Rule{
+						Kind: policy.QueryKindWarn,
+						Name: "002-rule",
+					},
+				},
+			},
+			Exceptions: []result.Result{
+				{
+					Message:     "",
+					RuleDocLink: "https://github.com/Azure/ShieldGuard/docs/003-rego.md",
+					Rule: policy.Rule{
+						Kind: policy.QueryKindException,
+						Name: "003-rule",
+					},
+				},
+			},
 		},
 		{
 			Source: &testsource.TestSource{NameFunc: func() string {

@@ -190,6 +190,16 @@ github.com/aws/aws-sdk-go v1.25.11/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpi
 github.com/aws/aws-sdk-go v1.27.1/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go v1.31.6/go.mod h1:5zCpMtNQVjRREroY7sYe8lOMRSxkhG6MZveU8YkpAk0=
 github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59/go.mod h1:q/89r3U2H7sSsE2t6Kca0lfwTK8JdoNGS/yzM/4iH5I=
+github.com/b4fun/ci v0.1.0 h1:uZoZcYL65mcyXIbl/luVknwIRyf8KSccIdWoCDQBag8=
+github.com/b4fun/ci v0.1.0/go.mod h1:Wg16B8Bzdn+G8EE8JY7a4Z8eu8PgbacAa1D2ytqxHyQ=
+github.com/b4fun/ci v0.1.1-0.20230207151420-f0df3eca1b86 h1:tsuO9n0fkHVjtJnjeGM99bk7TdHOA+XTzedKVGigiyY=
+github.com/b4fun/ci v0.1.1-0.20230207151420-f0df3eca1b86/go.mod h1:Wg16B8Bzdn+G8EE8JY7a4Z8eu8PgbacAa1D2ytqxHyQ=
+github.com/b4fun/ci v0.2.0 h1:alT9W8AwC41GBZmoARQOnYbDq1ZUbHuBlp0gx4Ma1YM=
+github.com/b4fun/ci v0.2.0/go.mod h1:Wg16B8Bzdn+G8EE8JY7a4Z8eu8PgbacAa1D2ytqxHyQ=
+github.com/b4fun/ci v0.3.0 h1:sL2dRyHofJfgwJvV12CP9okVkW4lMRenGXx7fogtP+4=
+github.com/b4fun/ci v0.3.0/go.mod h1:Wg16B8Bzdn+G8EE8JY7a4Z8eu8PgbacAa1D2ytqxHyQ=
+github.com/b4fun/ci v0.4.0 h1:9gwuZWLJ1tEdNCDeeVLfK9Nl0XFExR6uUnM2DvzjF2g=
+github.com/b4fun/ci v0.4.0/go.mod h1:Wg16B8Bzdn+G8EE8JY7a4Z8eu8PgbacAa1D2ytqxHyQ=
 github.com/basgys/goxml2json v1.1.0 h1:4ln5i4rseYfXNd86lGEB+Vi652IsIXIvggKM/BhUKVw=
 github.com/basgys/goxml2json v1.1.0/go.mod h1:wH7a5Np/Q4QoECFIU8zTQlZwZkrilY0itPfecMw41Dw=
 github.com/beorn7/perks v0.0.0-20160804104726-4c0e84591b9a/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
