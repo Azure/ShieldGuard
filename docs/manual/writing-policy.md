@@ -25,7 +25,7 @@ deny_host_volume[msg] { /* some content */ }
      ^^^^^^^^^^^ ---- policy name
 
 deny_host_volume[msg] { /* some content */ }
-                        ^^^^^^^^^^^^^^^^^^ ---- policy implementation
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^ ---- policy implementation
 ```
 
 And besides the OPA policy language itself, we also provide a by convention documentation reference based on the policy name.
