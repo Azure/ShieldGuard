@@ -11,7 +11,7 @@ to understand the reason and potential mitigation steps.
 
 In ShieldGuard, we express each policy rule as an expression with OPA policy language.
 
-We can further breakdown a policy rule as follow:
+We can further break down a policy rule as follow:
 
 ```rego
 deny_host_volume[msg] { /* some content */ }
