@@ -19,20 +19,39 @@ We can further break down a policy rule as follow:
 
 ```rego
 deny_host_volume[msg] { /* some content */ }
-^^^^ ---- policy kind
-
-deny_host_volume[msg] { /* some content */ }
-     ^^^^^^^^^^^ ---- policy name
-
-deny_host_volume[msg] { /* some content */ }
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^ ---- policy implementation
+^^^^ ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |           |                         |---- policy implementation
+   |           |---- policy name
+   |
+   |---- policy kind
 ```
 
 And besides the OPA policy language itself, we also provide a by convention documentation reference based on the policy name.
 
-### Policy Kind
+### Policy Kind & Policy Name
 
-### Policy Name
+We define following `kind`s as a way to tell the violation severity:
+
+| kind | description |
+|:----:|-------------|
+| `deny` | This violation **must** be avoided. Such violation fails the test run by default. |
+| `warn` | This violation **should** be avoided, but it doesn't fail the test run. |
+
+Example:
+
+```rego
+deny_disallowed_caps[msg] { }
+^^^^ ^^^^^^^^^^^^^^^ ----  policy name
+   |---- kind
+```
+
+```
+FAIL - /path/to/some/config.yaml - (disallowed_caps) Container 'foo' of Deployment 'bar' should not set `securityContext.capabilities.add`.
+^^^^                                ^^^^^^^^^^^^^^^ ---- policy name
+   |---- a deny violation generates a FAIL result
+```
+
+> ℹ️ By convention, the kind and rule name are separated by one and only one `_`.
 
 ### Policy Implementation
 
@@ -40,4 +59,36 @@ And besides the OPA policy language itself, we also provide a by convention docu
 
 ## Policy Package
 
+### Policy Name & Source File Name
+
+It's very common that there are multiple policy rules under a policy package. To help better organizing the policy rule implementations and documentations, we suggest package authors to 1. create one rule per rego file; 2. order rules with sequence id prefix. For example:
+
+```
+my-package/
+ /docs               # <- policy document folder
+   /001-rule-foo.md
+   /002-rule-bar.md
+   /003-rule-baz.md
+   ...
+ /sg-project.yaml    # <- policy package settings
+ /001-rule-foo.rego
+ /002-rule-bar.rego
+ /003-rule-baz.rego
+ ...
+```
+
+Inside each rego rule, we can implementation as follow:
+
+```rego
+# 001-rule-foo.rego
+
+deny_rule_foo[msg] {
+  # ... implementation details ...
+}
+```
+
+With such structure, the user can easily navigate inside the policy implementations and documentations, while policy author can keep track of the policy rules easily.
+
 ### Reusing Policy Packages
+
+TBD
