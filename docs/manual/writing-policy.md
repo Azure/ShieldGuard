@@ -71,7 +71,7 @@ my-package/
    /003-rule-baz.md
    ...
  /sg-project.yaml    # <- policy package settings
- /001-rule-foo.rego
+ /001-rule-foo.rego  # <- policy implementations
  /002-rule-bar.rego
  /003-rule-baz.rego
  ...
