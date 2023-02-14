@@ -55,6 +55,22 @@ FAIL - /path/to/some/config.yaml - (disallowed_caps) Container 'foo' of Deployme
 
 ### Policy Implementation
 
+Policy authors express the policy check via the [Rego's policy language][rego_policy_lang]. In each run, ShieldGuard's rule engine iterates and parses all defined policy rules. Then it goes through all input data and executes these parsed rules one by one. Each rule will be passed with *one* input data on the execution. A simplified execute flow is:
+
+TODO
+
+Inside the rule implementation body, we can reference the input data via `input` variable:
+
+TODO
+
+A typical rule implementation flow would be:
+
+1. check for "signature" from the input data structure. For instance, fields with targeted values;
+2. validate against interested fields and values;
+3. gather results based on the check. If a `true` value is calculated, then the rule engine collects the rule with associated kind.
+
+[rego_policy_lang]: https://www.openpolicyagent.org/docs/latest/policy-language/
+
 ### Policy Documentation
 
 ## Policy Package
