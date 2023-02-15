@@ -126,7 +126,7 @@ Even though each rule can provide an advisory message to help configuration auth
 
 <summary>Documentation Example</summary>
 
-Suppose we have a policy rule implementation using `001-missing-owner-label.rego`
+Suppose we have a policy rule implementation using `001-missing_owner_label.rego`
 
 ```rego
 # 001-missing_owner_label.rego
