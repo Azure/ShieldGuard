@@ -9,7 +9,7 @@ A simple diagram for getting quick understanding of these entities:
 
 ## What's a policy rule?
 
-Policy is the minimum execution unit in ShieldGuard. Each policy will be applied against each input data.
+Policy rule is the minimum execution unit in ShieldGuard. The query engine queries each rule with each of the input data to gather validation results.
 If the input data violates the policy, the policy should return an advisory message to help user
 to understand the reason and potential mitigation steps.
 
@@ -57,17 +57,61 @@ FAIL - /path/to/some/config.yaml - (disallowed_caps) Container 'foo' of Deployme
 
 Policy authors express the policy check via the [Rego's policy language][rego_policy_lang]. In each run, ShieldGuard's rule engine iterates and parses all defined policy rules. Then it goes through all input data and executes these parsed rules one by one. Each rule will be passed with *one* input data on the execution. A simplified execute flow is:
 
-TODO
+```python
+for policy_rule in gather_all_rules():
+  for input_data in loaded_input_data:
+    if rego.query(input_data, policy_rule.rule_name) == MATCH:
+      if rego.query(input_data, exception[_][_] == policy_rule.rule_name) != MATCH:
+        switch policy_rule.kind:
+          case "DENY"
+            deny_results.add(policy_rule)
+          case "WARN"
+            warn_results.add(policy_rule)
+      else: # exception == MATCH
+        exception_results.add(policy_rule)
+    else: # query result != MATCH
+      success_rules += 1
+```
 
 Inside the rule implementation body, we can reference the input data via `input` variable:
 
-TODO
+Suppose we have following input data in JSON form:
+
+```json
+{
+  "kind": "Namespace",
+  "metadata": {
+    "name": "my-app",
+    "labels": {
+       "tier": "production"
+    }
+  }
+}
+```
+
+In rego:
+
+```rego
+input.kind # "Namespace"
+input.meatadata.name # "my-app"
+```
 
 A typical rule implementation flow would be:
 
 1. check for "signature" from the input data structure. For instance, fields with targeted values;
 2. validate against interested fields and values;
 3. gather results based on the check. If a `true` value is calculated, then the rule engine collects the rule with associated kind.
+
+Using the above namespace data, if we want to enforce setting the "owner" label for it, we can use following code:
+
+```rego
+warn_missing_label[msg] {
+  input.kind == "Namespace" # check for signature
+  input.metadata.labels.tier == "production" # check for signature
+  not input.metadata.labels.owner # validate against interested fields and values
+  msg := "missing owner label for production namespace" # generate result
+}
+```
 
 [rego_policy_lang]: https://www.openpolicyagent.org/docs/latest/policy-language/
 
