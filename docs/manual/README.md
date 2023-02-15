@@ -8,4 +8,4 @@
 
 ## Writing Policies & Documentations
 
-- TODO(hbc): policies guide
+- [Writing Policy](./writing-policy.md)
