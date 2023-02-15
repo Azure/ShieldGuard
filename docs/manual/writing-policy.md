@@ -11,7 +11,7 @@ A simple diagram for getting quick understanding of these entities:
 
 Policy rule is the minimum execution unit in ShieldGuard. The query engine queries each rule with each of the input data to gather validation results.
 If the input data violates the policy, the policy should return an advisory message to help user
-to understand the reason and potential mitigation steps.
+ understand the reason and potential mitigation steps.
 
 In ShieldGuard, we express each policy rule as an expression with OPA policy language.
 
@@ -26,7 +26,7 @@ deny_host_volume[msg] { /* some content */ }
    |---- policy kind
 ```
 
-And besides the OPA policy language itself, we also provide a by convention documentation reference based on the policy name.
+Besides the OPA policy language itself, we also provide a by convention documentation reference based on the policy name.
 
 ### Policy Kind & Policy Name
 
@@ -120,7 +120,7 @@ warn_missing_owner_label[msg] {
 
 ### Policy Documentation
 
-Even though each rule can provide an advisory message to help configuration authors to understand why one or more rules have failed during the execution, however, sometimes it's still challenge to provide detailed background, explanations and mitigation steps. Therefore, in ShieldGuard, we prompt the documentation with higher priority: each rule comes with an optional documentation. These documentations can be referenced via a URL, which is defined in the policy package settings.
+Even though each rule can provide an advisory message to help configuration authors to understand why one or more rules have failed during the execution, sometimes it's still challenge to provide detailed background, explanations and mitigation steps. Therefore, in ShieldGuard, we prompt the documentation with higher priority: each rule comes with an optional documentation. These documentations can be referenced via a URL, which is defined in the policy package settings.
 
 <details>
 
