@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/b4fun/ci v0.4.0
 	github.com/open-policy-agent/conftest v0.42.1
-	github.com/open-policy-agent/opa v0.53.0
+	github.com/open-policy-agent/opa v0.53.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
