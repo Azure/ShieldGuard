@@ -1,4 +1,4 @@
-# PSS-RESTRICTED-02: Minimum Capabilities Containers
+# PSS-RESTRICTED-002: Minimum Capabilities Containers
 
 Containers should run with minimal capabilities, so need to drop all capabilites and only allow to add back `NET_BIND_SERVICE` capability only in field `securityContext.capbilities` for containers.
 
