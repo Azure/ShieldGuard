@@ -31,13 +31,6 @@ archives:
 - id: sg
   name_template: >-
     {{ .ProjectName }}_{{- title .Os }}_{{- if eq .Arch "amd64" }}x86_64{{- else if eq .Arch "386" }}i386{{- else }}{{ .Arch }}{{ end }}
-blobs:
-# NOTE: we upload the binaries to here for internal usage.
-#       Will revise once we open source the project.
-- provider: azblob
-  endpoint: https://sgartifacts.blob.core.windows.net/
-  bucket: sg-release
-  ids: [sg]
 
 checksum:
   name_template: 'checksums.txt'
