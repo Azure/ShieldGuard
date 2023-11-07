@@ -6,7 +6,7 @@ require (
 	github.com/b4fun/ci v0.4.0
 	github.com/open-policy-agent/conftest v0.46.0
 	github.com/open-policy-agent/opa v0.58.0
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v3 v3.0.1
