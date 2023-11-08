@@ -99,6 +99,10 @@ func (cliApp *cliApp) Run() error {
 		return fmt.Errorf("read project spec: %w", err)
 	}
 
+	if err := projectSpec.Validate(); err != nil {
+		return fmt.Errorf("project spec validation failed: %w", err)
+	}
+
 	var queryResultsList []result.QueryResults
 	for _, target := range projectSpec.Files {
 		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target)

@@ -27,6 +27,21 @@ type FileTargetSpec struct {
 	Data []string `json:"data"`
 }
 
+func (ps Spec) Validate() error {
+	if ps.Files == nil || len(ps.Files) == 0 {
+		return fmt.Errorf("at least one file target is required")
+	}
+	for _, target := range ps.Files {
+		if target.Paths == nil || len(target.Paths) == 0 {
+			return fmt.Errorf("file target paths cannot be empty")
+		}
+		if target.Policies == nil || len(target.Policies) == 0 {
+			return fmt.Errorf("file target policies list cannot be empty")
+		}
+	}
+	return nil
+}
+
 // strListOrMap is a helper type to support specifying string value using list or map (keys).
 // When marshaling back to JSON/YAML, it will always be marshaled as an ordered list.
 //
