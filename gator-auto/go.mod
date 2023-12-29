@@ -3,7 +3,6 @@ module github.com/Azure/ShieldGuard/gator-auto
 go 1.21.3
 
 require (
-	github.com/open-policy-agent/frameworks/constraint v0.0.0-20231030230613-2e0cb3d68575
 	github.com/open-policy-agent/gatekeeper/v3 v3.14.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
@@ -83,6 +82,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/open-policy-agent/frameworks/constraint v0.0.0-20231030230613-2e0cb3d68575 // indirect
 	github.com/open-policy-agent/opa v0.57.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc5 // indirect
