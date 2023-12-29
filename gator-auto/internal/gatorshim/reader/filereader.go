@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Azure/ShieldGuard/gator-auto/internal/gatorshim/types"
 	gatorreader "github.com/open-policy-agent/gatekeeper/v3/pkg/gator/reader"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -15,9 +14,9 @@ var allowedExtensions = []string{".yaml", ".yml", ".json"}
 
 type source struct {
 	filename string
-	image    string
-	stdin    bool
-	objs     []*unstructured.Unstructured
+	// image    string
+	// stdin    bool
+	objs []*unstructured.Unstructured
 }
 
 func readFile(filename string) ([]*source, error) {
@@ -147,13 +146,13 @@ func sourcesToUnstruct(sources []*source) []*unstructured.Unstructured {
 	return us
 }
 
-func ReadTargets(filenames []string) (*types.TestTargets, error) {
+func ReadTargets(filenames []string) (*TestTargets, error) {
 	sources, err := readFiles(filenames)
 	if err != nil {
 		return nil, err
 	}
 
-	rv := &types.TestTargets{
+	rv := &TestTargets{
 		ObjectSources: make(map[*unstructured.Unstructured]string),
 	}
 

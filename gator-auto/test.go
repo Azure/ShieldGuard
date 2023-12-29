@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Azure/ShieldGuard/gator-auto/internal/gatorshim/reader"
-	"github.com/Azure/ShieldGuard/gator-auto/internal/gatorshim/test"
 	gatortest "github.com/open-policy-agent/gatekeeper/v3/pkg/gator/test"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -30,7 +29,7 @@ func gatorTest(
 
 	responses, err := gatortest.Test(
 		targets.Objects,
-		test.Opts{
+		gatortest.Opts{
 			IncludeTrace: true,
 			GatherStats:  true,
 		},
