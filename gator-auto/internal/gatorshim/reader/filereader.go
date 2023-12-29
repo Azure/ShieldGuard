@@ -10,21 +10,19 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+// ref: https://github.com/open-policy-agent/gatekeeper/blob/5978ea8a08b7494dbf82a54fc5c109f9e00f33ae/pkg/gator/reader/filereader.go
+
 var allowedExtensions = []string{".yaml", ".yml", ".json"}
 
-type source struct {
-	filename string
-	// image    string
-	// stdin    bool
-	objs []*unstructured.Unstructured
-}
-
-func readFile(filename string) ([]*source, error) {
+func readFile(filename string) (*TestTargets, error) {
 	if err := verifyFile(filename); err != nil {
 		return nil, err
 	}
 
-	var sources []*source
+	rv := &TestTargets{
+		ObjectSources: make(map[*unstructured.Unstructured]ObjectSource),
+	}
+
 	expanded, err := expandDirectories([]string{filename})
 	if err != nil {
 		return nil, fmt.Errorf("normalizing filenames: %w", err)
@@ -42,26 +40,29 @@ func readFile(filename string) ([]*source, error) {
 			return nil, fmt.Errorf("reading file %q: %w", f, err)
 		}
 
-		sources = append(sources, &source{
-			filename: f,
-			objs:     us,
-		})
+		rv.Objects = append(rv.Objects, us...)
+		for _, obj := range us {
+			rv.ObjectSources[obj] = ObjectSource{
+				SourceType: SourceTypeFile,
+				FilePath:   f,
+			}
+		}
 	}
 
-	return sources, nil
+	return rv, nil
 }
 
-func readFiles(filenames []string) ([]*source, error) {
-	var sources []*source
+func readFiles(filenames []string) (*TestTargets, error) {
+	var rv *TestTargets
 	for _, f := range filenames {
 		s, err := readFile(f)
 		if err != nil {
 			return nil, err
 		}
-		sources = append(sources, s...)
+		rv = rv.merge(s)
 	}
 
-	return sources, nil
+	return rv, nil
 }
 
 // verifyFile checks that the filenames aren't themselves disallowed extensions.
@@ -136,32 +137,4 @@ func allowedExtension(path string) bool {
 	}
 
 	return false
-}
-
-func sourcesToUnstruct(sources []*source) []*unstructured.Unstructured {
-	var us []*unstructured.Unstructured
-	for _, s := range sources {
-		us = append(us, s.objs...)
-	}
-	return us
-}
-
-func ReadTargets(filenames []string) (*TestTargets, error) {
-	sources, err := readFiles(filenames)
-	if err != nil {
-		return nil, err
-	}
-
-	rv := &TestTargets{
-		ObjectSources: make(map[*unstructured.Unstructured]string),
-	}
-
-	for _, source := range sources {
-		rv.Objects = append(rv.Objects, source.objs...)
-		for _, obj := range source.objs {
-			rv.ObjectSources[obj] = source.filename
-		}
-	}
-
-	return rv, nil
 }

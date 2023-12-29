@@ -26,24 +26,24 @@ func gatorTest(
 	ctx context.Context,
 	params GatorTestParams,
 ) error {
-	constraintTargets, err := constraints.LoadGatorConstraints(ctx, params.Policies)
+	constraintTargets, err := constraints.Load(ctx, constraints.LoadParams{
+		RegoPaths: params.Policies,
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("load constraints: %w", err)
 	}
 
-	targets, err := reader.ReadTargets(params.Sources)
+	testTargets, err := reader.Load(ctx, reader.LoadParams{
+		FileSources: params.Sources,
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("load test targets: %w", err)
 	}
 
 	var objects []*unstructured.Unstructured
-	objects = append(objects, targets.Objects...)
+	objects = append(objects, testTargets.Objects...)
 	objects = append(objects, constraintTargets.Constraints...)
 	objects = append(objects, constraintTargets.ConstraintTemplates...)
-
-	for _, obj := range objects {
-		fmt.Println("loaded object", obj.GroupVersionKind(), obj.GetName())
-	}
 
 	responses, err := gatortest.Test(
 		objects,
@@ -53,15 +53,14 @@ func gatorTest(
 		},
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("gator test: %w", err)
 	}
 
-	fmt.Println(responses.ByTarget)
-	fmt.Println(responses.StatsEntries)
+	// fmt.Println(responses.ByTarget)
+	// fmt.Println(responses.StatsEntries)
 	for _, result := range responses.Results() {
-		fmt.Println(result)
-		path := targets.ObjectSources[result.ViolatingObject]
-		fmt.Println(path)
+		path := testTargets.ObjectSources[result.ViolatingObject]
+		fmt.Printf("%q %+v\n", path, result)
 	}
 	return nil
 }
