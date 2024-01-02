@@ -21,6 +21,13 @@ func Load(ctx context.Context, params LoadParams) (*TestTargets, error) {
 	}
 
 	// TODO: read from kustomize
+	if len(params.KustomizeSources) > 0 {
+		err := readKustomizes(params.KustomizeSources)
+		if err != nil {
+			return nil, err
+		}
+		// rv = rv.merge(kustomizes)
+	}
 
 	return rv, nil
 }

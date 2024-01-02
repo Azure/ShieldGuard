@@ -33,5 +33,5 @@ tidy: ## Tidy go.mod and go.sum.
 
 ##@ Build
 
-build:
+build: ## Build the binary.
 	go build -v -x -o bin/gator-auto *.go
