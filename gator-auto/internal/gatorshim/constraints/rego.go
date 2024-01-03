@@ -14,6 +14,18 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+const (
+	EnforcementActionDryRun = "dryrun"
+	EnforcementActionDeny   = "deny"
+	EnforcementActionWarn   = "warn"
+)
+
+var knownEnforcementActionsMap = map[string]struct{}{
+	EnforcementActionDryRun: {},
+	EnforcementActionDeny:   {},
+	EnforcementActionWarn:   {},
+}
+
 type ConstraintTargets struct {
 	Constraints         []*unstructured.Unstructured
 	ConstraintTemplates []*unstructured.Unstructured
@@ -25,7 +37,7 @@ var dns1035LabelPrefixRegex = regexp.MustCompile("^[a-z]")
 func regoFileToConstraint(
 	regoFile *loader.RegoFile,
 ) (constraintTemplate *unstructured.Unstructured, constraint *unstructured.Unstructured) {
-	enforcementAction := "deny"
+	enforcementAction := EnforcementActionDeny
 	for _, annotation := range regoFile.Parsed.Annotations {
 		if annotation.Scope != "package" {
 			continue
@@ -34,7 +46,7 @@ func regoFileToConstraint(
 		for k, v := range annotation.Custom {
 			if k == "enforcementAction" {
 				vv := fmt.Sprint(v)
-				if vv == "dryrun" || vv == "deny" || vv == "warn" {
+				if _, ok := knownEnforcementActionsMap[vv]; ok {
 					enforcementAction = vv
 				}
 			}

@@ -30,7 +30,8 @@ func (tt *TestTargets) merge(other *TestTargets) *TestTargets {
 	}
 
 	rv := &TestTargets{
-		Objects: append(tt.Objects, other.Objects...),
+		Objects:       append(tt.Objects, other.Objects...),
+		ObjectSources: make(map[*unstructured.Unstructured]ObjectSource),
 	}
 	for k, v := range tt.ObjectSources {
 		rv.ObjectSources[k] = v

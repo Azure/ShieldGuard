@@ -13,20 +13,19 @@ func Load(ctx context.Context, params LoadParams) (*TestTargets, error) {
 	var rv *TestTargets
 
 	if len(params.FileSources) > 0 {
-		files, err := readFiles(params.FileSources)
+		targets, err := readFiles(params.FileSources)
 		if err != nil {
 			return nil, err
 		}
-		rv = rv.merge(files)
+		rv = rv.merge(targets)
 	}
 
-	// TODO: read from kustomize
 	if len(params.KustomizeSources) > 0 {
-		err := readKustomizes(params.KustomizeSources)
+		targets, err := readKustomizes(params.KustomizeSources)
 		if err != nil {
 			return nil, err
 		}
-		// rv = rv.merge(kustomizes)
+		rv = rv.merge(targets)
 	}
 
 	return rv, nil
