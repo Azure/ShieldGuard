@@ -77,7 +77,7 @@ func (w *kustomizePatchedFileSystem) ReadFile(path string) ([]byte, error) {
 	return patched, nil
 }
 
-func objectSourceFromAnnotations(
+func objectSourceFromKustomizeAnnotations(
 	kustomizeDir string,
 	annotations map[string]string,
 ) ObjectSource {
@@ -142,7 +142,7 @@ func readKustomize(kustomizeDir string) (*TestTargets, error) {
 		rv.Objects = append(rv.Objects, us...)
 		for _, obj := range us {
 			annotations := obj.GetAnnotations()
-			rv.ObjectSources[obj] = objectSourceFromAnnotations(kustomizeDir, annotations)
+			rv.ObjectSources[obj] = objectSourceFromKustomizeAnnotations(kustomizeDir, annotations)
 		}
 	}
 

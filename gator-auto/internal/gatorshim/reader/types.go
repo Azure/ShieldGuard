@@ -9,6 +9,7 @@ const (
 	SourceTypeImage     SourceType = "image"
 	SourceTypeStdin     SourceType = "stdin"
 	SourceTypeKustomize SourceType = "kustomize"
+	SourceTypeHelm      SourceType = "helm"
 )
 
 type ObjectSource struct {

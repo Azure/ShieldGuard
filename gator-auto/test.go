@@ -17,12 +17,16 @@ import (
 type GatorTestParams struct {
 	Sources          []string
 	KustomizeSources []string
+	HelmCommand      string
+	HelmCharts       []string
 	Policies         []string
 }
 
 func (p *GatorTestParams) BindCLIFlags(fs *pflag.FlagSet) {
 	fs.StringSliceVar(&p.Sources, "filename", nil, "Paths to source file")
 	fs.StringSliceVar(&p.KustomizeSources, "kustomize", nil, "Paths to kustomize sources")
+	fs.StringVar(&p.HelmCommand, "helm-command", "", "Helm command to use for rendering helm charts")
+	fs.StringSliceVar(&p.HelmCharts, "helm-chart", nil, "Paths to helm charts")
 	fs.StringSliceVar(&p.Policies, "policy", nil, "Paths to rego policy file")
 }
 
@@ -111,6 +115,8 @@ func gatorTest(
 	testTargets, err := reader.Load(ctx, reader.LoadParams{
 		FileSources:      params.Sources,
 		KustomizeSources: params.KustomizeSources,
+		HelmCommand:      params.HelmCommand,
+		HelmSources:      params.HelmCharts,
 	})
 	if err != nil {
 		return fmt.Errorf("load test targets: %w", err)
