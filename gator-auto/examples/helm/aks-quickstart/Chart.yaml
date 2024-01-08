@@ -1,0 +1,3 @@
+apiVersion: v2
+name: aks-quickstart
+version: 0.0.1

@@ -1,0 +1,4 @@
+rabbitmq:
+  annotations:
+    acme/owning-contact: "rabbitmq-team-contact"
+    acme/owning-team: "rabbitmq"

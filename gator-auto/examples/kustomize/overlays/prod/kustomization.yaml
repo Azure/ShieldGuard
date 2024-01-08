@@ -1,0 +1,5 @@
+resources:
+- ../base
+
+commonAnnotations:
+  acme/owning-contact: "prod-team-contact"

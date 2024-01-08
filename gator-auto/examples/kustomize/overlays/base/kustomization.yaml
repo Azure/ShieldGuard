@@ -1,0 +1,5 @@
+resources:
+- rabbitmq-deployment.yaml
+- order-service-deployment.yaml
+- product-service-deployment.yaml
+- store-service-deployment.yaml

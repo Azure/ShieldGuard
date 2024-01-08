@@ -1,0 +1,5 @@
+resources:
+- ../base
+
+commonAnnotations:
+  acme/owning-team: "dev-team"
