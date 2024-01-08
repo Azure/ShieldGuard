@@ -16,6 +16,9 @@ However, we identified a few shortcomings while integrating it in our daily usag
 ## Building
 
 ```
+$ git clone https://github.com/Azure/ShieldGuard.git
+$ cd ShieldGuard
+$ git checkout gator-auto
 $ make build
 $ /bin/gator-auto -h
 Usage:
