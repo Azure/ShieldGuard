@@ -53,7 +53,7 @@ We define a sample policy for checking required annotations from object spec:
 
 `001-required-annotations.rego`
 
-```
+```rego
 # METADATA
 # custom:
 #  enforcementAction: deny
