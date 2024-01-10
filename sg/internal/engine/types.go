@@ -14,6 +14,7 @@ type QueryOptions struct {
 // Queryer performs queries against a target.
 type Queryer interface {
 	// Query executes the query.
+	// The query call is expected to concurrent safe.
 	Query(
 		ctx context.Context,
 		source source.Source,

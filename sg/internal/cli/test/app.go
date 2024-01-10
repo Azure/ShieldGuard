@@ -13,6 +13,7 @@ import (
 	"github.com/Azure/ShieldGuard/sg/internal/result/presenter"
 	"github.com/Azure/ShieldGuard/sg/internal/source"
 	"github.com/Azure/ShieldGuard/sg/internal/utils"
+	"github.com/sourcegraph/conc/iter"
 	"github.com/spf13/pflag"
 )
 
@@ -86,6 +87,10 @@ func newCliApp(ms ...func(*cliApp)) *cliApp {
 	return rv
 }
 
+func (cliApp *cliApp) newQueryMapper() iter.Mapper[source.Source, result.QueryResults] {
+	return iter.Mapper[source.Source, result.QueryResults]{}
+}
+
 func (cliApp *cliApp) Run() error {
 	if err := cliApp.defaults(); err != nil {
 		return fmt.Errorf("defaults: %w", err)
@@ -99,9 +104,11 @@ func (cliApp *cliApp) Run() error {
 		return fmt.Errorf("read project spec: %w", err)
 	}
 
+	queryMapper := cliApp.newQueryMapper()
+
 	var queryResultsList []result.QueryResults
 	for _, target := range projectSpec.Files {
-		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target)
+		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target, queryMapper)
 		if err != nil {
 			return fmt.Errorf("run target (%s): %w", target.Name, err)
 		}
@@ -180,18 +187,9 @@ func (cliApp *cliApp) queryFileTarget(
 		return nil, fmt.Errorf("create queryer failed: %w", err)
 	}
 
-	var rv []result.QueryResults
-	for _, source := range sources {
-		queryOpts := &engine.QueryOptions{}
-		queryResult, err := queryer.Query(ctx, source, queryOpts)
-		if err != nil {
-			return nil, fmt.Errorf("query failed: %w", err)
-		}
-
-		rv = append(rv, queryResult)
-	}
-
-	return rv, nil
+	return queryMapper.MapErr(sources, func(s *source.Source) (result.QueryResults, error) {
+		return queryer.Query(ctx, *s, &engine.QueryOptions{})
+	})
 }
 
 func resolveToContextRootFn(contextRoot string) func(string) string {
