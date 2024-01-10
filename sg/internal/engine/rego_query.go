@@ -6,6 +6,7 @@ import (
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
+	"github.com/sourcegraph/conc/iter"
 
 	"github.com/Azure/ShieldGuard/sg/internal/policy"
 	"github.com/Azure/ShieldGuard/sg/internal/result"
@@ -44,6 +45,7 @@ const PackageMain = "main"
 type RegoEngine struct {
 	policyPackages []policy.Package
 	compiler       *ast.Compiler
+	limiter        Limiter
 }
 
 var _ Queryer = (*RegoEngine)(nil)
@@ -85,8 +87,6 @@ func (engine *RegoEngine) queryPackage(
 	//       rules should be the count of total rules minus the query results plus
 	//       succeeded query results.
 
-	queryResult := result.QueryResults{}
-
 	allRules := policyPackage.Rules()
 	distinctRules := make([]policy.Rule, 0, len(allRules))
 	rulesSet := make(map[string]struct{}, len(allRules))
@@ -100,24 +100,47 @@ func (engine *RegoEngine) queryPackage(
 		distinctRules = append(distinctRules, rule)
 	}
 
-	for _, rule := range distinctRules {
-		if rule.Namespace != PackageMain {
-			// we only care about rules in the main package
-			continue
-		}
+	mm := iter.Mapper[policy.Rule, result.QueryResults]{
+		MaxGoroutines: len(distinctRules),
+	}
+	queryResults, err := mm.MapErr(
+		distinctRules,
+		func(rulePtr *policy.Rule) (result.QueryResults, error) {
+			done := engine.limiter.acquire()
+			defer done()
 
-		if !rule.IsKind(policy.QueryKindWarn, policy.QueryKindDeny, policy.QueryKindViolation) {
-			// not a query rule
-			continue
-		}
+			rule := *rulePtr
 
-		if err := engine.queryRule(
-			ctx,
-			policyPackage, rule,
-			loadedConfiguration, &queryResult,
-		); err != nil {
-			return queryResult, fmt.Errorf("failed to query rule: %w", err)
-		}
+			rv := result.QueryResults{}
+
+			if rule.Namespace != PackageMain {
+				// we only care about rules in the main package
+				return rv, nil
+			}
+
+			if !rule.IsKind(policy.QueryKindWarn, policy.QueryKindDeny, policy.QueryKindViolation) {
+				// not a query rule
+				return rv, nil
+			}
+
+			if err := engine.queryRule(
+				ctx,
+				policyPackage, rule,
+				loadedConfiguration, &rv,
+			); err != nil {
+				return rv, fmt.Errorf("failed to query rule: %w", err)
+			}
+
+			return rv, nil
+		},
+	)
+	if err != nil {
+		return result.QueryResults{}, nil
+	}
+
+	queryResult := result.QueryResults{}
+	for _, qr := range queryResults {
+		queryResult = queryResult.Merge(qr)
 	}
 
 	resultsCount := queryResult.Successes + len(queryResult.Failures) + len(queryResult.Warnings) + len(queryResult.Exceptions)

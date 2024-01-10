@@ -87,10 +87,6 @@ func newCliApp(ms ...func(*cliApp)) *cliApp {
 	return rv
 }
 
-func (cliApp *cliApp) newQueryMapper() iter.Mapper[source.Source, result.QueryResults] {
-	return iter.Mapper[source.Source, result.QueryResults]{}
-}
-
 func (cliApp *cliApp) Run() error {
 	if err := cliApp.defaults(); err != nil {
 		return fmt.Errorf("defaults: %w", err)
@@ -104,11 +100,9 @@ func (cliApp *cliApp) Run() error {
 		return fmt.Errorf("read project spec: %w", err)
 	}
 
-	queryMapper := cliApp.newQueryMapper()
-
 	var queryResultsList []result.QueryResults
 	for _, target := range projectSpec.Files {
-		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target, queryMapper)
+		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target)
 		if err != nil {
 			return fmt.Errorf("run target (%s): %w", target.Name, err)
 		}
@@ -185,6 +179,10 @@ func (cliApp *cliApp) queryFileTarget(
 	queryer, err := engine.QueryWithPolicy(policyPaths).Complete()
 	if err != nil {
 		return nil, fmt.Errorf("create queryer failed: %w", err)
+	}
+
+	queryMapper := iter.Mapper[source.Source, result.QueryResults]{
+		MaxGoroutines: len(sources),
 	}
 
 	return queryMapper.MapErr(sources, func(s *source.Source) (result.QueryResults, error) {
