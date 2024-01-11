@@ -167,7 +167,7 @@ func Test_cliApp_perf(t *testing.T) {
 	t.Parallel()
 
 	// generates filesCount * rulesCount targets
-	const filesCount = 100
+	const filesCount = 200
 	const rulesCount = 100
 
 	tempDir := t.TempDir()
