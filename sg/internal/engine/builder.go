@@ -41,7 +41,7 @@ func (qb *QueryerBuilder) Complete() (Queryer, error) {
 		// NOTE: we limit the actual query by CPU count as policy evaluation is CPU bounded.
 		//       For input actions like reading policy files / source code, we allow them to run unbounded,
 		//       as the actual limiting is done by this limiter.
-		limiter: newCPUBoundedLimiter(),
+		limiter: newLimiterFromMaxProcs(),
 	}
 	return rv, nil
 }

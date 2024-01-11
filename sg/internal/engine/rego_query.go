@@ -45,7 +45,7 @@ const PackageMain = "main"
 type RegoEngine struct {
 	policyPackages []policy.Package
 	compiler       *ast.Compiler
-	limiter        Limiter
+	limiter        limiter
 }
 
 var _ Queryer = (*RegoEngine)(nil)

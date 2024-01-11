@@ -22,8 +22,8 @@ type Queryer interface {
 	) (result.QueryResults, error)
 }
 
-// Limiter limits the query concurrency.
-type Limiter interface {
+// limiter limits the query concurrency.
+type limiter interface {
 	// acquire acquires a resource. Caller must call release() when done.
 	acquire() (release func())
 }
