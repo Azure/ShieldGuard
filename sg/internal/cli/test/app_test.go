@@ -1,12 +1,15 @@
 package test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/Azure/ShieldGuard/sg/internal/project"
 	"github.com/Azure/ShieldGuard/sg/internal/result"
 	"github.com/Azure/ShieldGuard/sg/internal/result/presenter"
 	"github.com/stretchr/testify/assert"
@@ -151,4 +154,85 @@ func Test_cliApp_defaults(t *testing.T) {
 			assert.Error(t, cases[idx].defaults())
 		})
 	}
+}
+
+func Test_cliApp_perf(t *testing.T) {
+	if testing.Short() {
+		// this test is slow, skip it in short mode
+		t.Skip("skipping test in short mode")
+		return
+	}
+
+	t.Parallel()
+
+	// generates filesCount * rulesCount targets
+	const filesCount = 300
+	const rulesCount = 200
+
+	tempDir := t.TempDir()
+	sgProjectConfigFile := filepath.Join(tempDir, "sg-project.yaml")
+	configurationsDir := "configurations"
+	policyDir := "policy"
+
+	for _, dir := range []string{configurationsDir, policyDir} {
+		assert.NoError(t, os.Mkdir(filepath.Join(tempDir, dir), 0755))
+	}
+
+	// construct configurations folder
+	spec := project.Spec{}
+	for i := 0; i < filesCount; i++ {
+		subConfigurationsDir := fmt.Sprintf("test-%d", i)
+		targetPath := filepath.Join(configurationsDir, subConfigurationsDir)
+
+		filePath := filepath.Join(tempDir, targetPath, "test.json")
+		assert.NoError(t, os.MkdirAll(filepath.Dir(filePath), 0755))
+		assert.NoError(t, os.WriteFile(filePath, []byte("{}"), 0644))
+
+		spec.Files = append(spec.Files, project.FileTargetSpec{
+			Name:  fmt.Sprintf("test-%d", i),
+			Paths: []string{targetPath},
+			Policies: []string{
+				policyDir,
+			},
+		})
+	}
+
+	spProjectContent, err := json.Marshal(spec)
+	assert.NoError(t, err)
+	assert.NoError(t, os.WriteFile(sgProjectConfigFile, spProjectContent, 0644))
+
+	// construct rules
+	for i := 0; i < rulesCount; i++ {
+		fileName := fmt.Sprintf("%03d-test.rego", i)
+		filePath := filepath.Join(tempDir, policyDir, fileName)
+		policyContent := fmt.Sprintf(`
+package main
+
+deny_deny_rule_%d[msg] {
+	msg := "deny_rule_%d"
+}
+
+exception[rules] {
+	rules = ["deny_rule_%d"]
+} 
+`, i, i, i)
+		assert.NoError(t, os.WriteFile(filePath, []byte(policyContent), 0644))
+	}
+
+	cliApp := newCliApp(
+		func(cliApp *cliApp) {
+			cliApp.contextRoot = tempDir
+			cliApp.projectSpecFile = sgProjectConfigFile
+			cliApp.stdout = io.Discard
+		},
+	)
+
+	t.Log("starting perf test")
+
+	start := time.Now()
+	runErr := cliApp.Run()
+	duration := time.Since(start)
+	t.Logf("perf test duration: %s", duration)
+
+	assert.NoError(t, runErr)
 }
