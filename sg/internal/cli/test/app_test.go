@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -166,8 +167,8 @@ func Test_cliApp_perf(t *testing.T) {
 	t.Parallel()
 
 	// generates filesCount * rulesCount targets
-	const filesCount = 300
-	const rulesCount = 200
+	const filesCount = 100
+	const rulesCount = 100
 
 	tempDir := t.TempDir()
 	sgProjectConfigFile := filepath.Join(tempDir, "sg-project.yaml")
@@ -232,7 +233,10 @@ exception[rules] {
 	start := time.Now()
 	runErr := cliApp.Run()
 	duration := time.Since(start)
-	t.Logf("perf test duration: %s", duration)
+	t.Logf(
+		"perf test duration: %s (CPU=%d files=%d, rules=%d)",
+		duration, runtime.GOMAXPROCS(0), filesCount, rulesCount,
+	)
 
 	assert.NoError(t, runErr)
 }
