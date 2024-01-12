@@ -8,12 +8,18 @@ type channelLimiter chan struct{}
 var _ limiter = (*channelLimiter)(nil)
 
 func (l channelLimiter) acquire() func() {
-	l <- struct{}{}
-	return func() { <-l }
+	p := <-l
+	return func() { l <- p }
 }
 
 func newLimiter(concurrency int) channelLimiter {
-	return make(chan struct{}, concurrency)
+	rv := make(chan struct{}, concurrency)
+
+	for i := 0; i < concurrency; i++ {
+		rv <- struct{}{}
+	}
+
+	return rv
 }
 
 func newLimiterFromMaxProcs() channelLimiter {
