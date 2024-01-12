@@ -13,6 +13,7 @@ import (
 	"github.com/Azure/ShieldGuard/sg/internal/result/presenter"
 	"github.com/Azure/ShieldGuard/sg/internal/source"
 	"github.com/Azure/ShieldGuard/sg/internal/utils"
+	"github.com/sourcegraph/conc/iter"
 	"github.com/spf13/pflag"
 )
 
@@ -180,18 +181,13 @@ func (cliApp *cliApp) queryFileTarget(
 		return nil, fmt.Errorf("create queryer failed: %w", err)
 	}
 
-	var rv []result.QueryResults
-	for _, source := range sources {
-		queryOpts := &engine.QueryOptions{}
-		queryResult, err := queryer.Query(ctx, source, queryOpts)
-		if err != nil {
-			return nil, fmt.Errorf("query failed: %w", err)
-		}
-
-		rv = append(rv, queryResult)
+	queryMapper := iter.Mapper[source.Source, result.QueryResults]{
+		MaxGoroutines: len(sources),
 	}
 
-	return rv, nil
+	return queryMapper.MapErr(sources, func(s *source.Source) (result.QueryResults, error) {
+		return queryer.Query(ctx, *s, &engine.QueryOptions{})
+	})
 }
 
 func resolveToContextRootFn(contextRoot string) func(string) string {
