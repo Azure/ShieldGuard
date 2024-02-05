@@ -4,7 +4,7 @@ go 1.21.0
 
 require (
 	github.com/b4fun/ci v0.4.0
-	github.com/open-policy-agent/conftest v0.48.0
+	github.com/open-policy-agent/conftest v0.49.0
 	github.com/open-policy-agent/opa v0.61.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/cobra v1.8.0
