@@ -227,7 +227,7 @@ func (engine *RegoEngine) createRegoInstance(
 ) *rego.Rego {
 	opts := []func(*rego.Rego){
 		rego.ParsedInput(parsedInput),
-		rego.Query(query),
+		rego.Query(query), // TODO: consider pre-compile query for perf
 		rego.Compiler(engine.compiler),
 	}
 
