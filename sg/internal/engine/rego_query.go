@@ -16,7 +16,7 @@ import (
 
 type loadedConfiguration struct {
 	Name          string
-	Configuration interface{}
+	Configuration ast.Value
 }
 
 func loadSource(source source.Source) ([]loadedConfiguration, error) {
@@ -222,12 +222,12 @@ func (engine *RegoEngine) queryRule(
 }
 
 func (engine *RegoEngine) createRegoInstance(
-	input interface{},
+	parsedInput ast.Value,
 	query string,
 ) *rego.Rego {
 	opts := []func(*rego.Rego){
-		rego.Input(input),
-		rego.Query(query),
+		rego.ParsedInput(parsedInput),
+		rego.Query(query), // TODO: consider pre-compile query for perf
 		rego.Compiler(engine.compiler),
 	}
 
@@ -236,10 +236,10 @@ func (engine *RegoEngine) createRegoInstance(
 
 func (engine *RegoEngine) executeOneQuery(
 	ctx context.Context,
-	input interface{},
+	parsedInput ast.Value,
 	query string,
 ) ([]result.Result, error) {
-	regoInstance := engine.createRegoInstance(input, query)
+	regoInstance := engine.createRegoInstance(parsedInput, query)
 	resultSet, err := regoInstance.Eval(ctx)
 	if err != nil {
 		return nil, err
