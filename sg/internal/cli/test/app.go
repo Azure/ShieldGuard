@@ -66,10 +66,11 @@ func (s *failSettings) CheckQueryResults(results []result.QueryResults) error {
 
 // cliApp is the CLI cliApplication for the test subcommand.
 type cliApp struct {
-	projectSpecFile string
-	contextRoot     string
-	outputFormat    string
-	failSettings    *failSettings
+	projectSpecFile  string
+	contextRoot      string
+	outputFormat     string
+	failSettings     *failSettings
+	enableQueryCache bool
 
 	stdout io.Writer
 }
@@ -100,9 +101,11 @@ func (cliApp *cliApp) Run() error {
 		return fmt.Errorf("read project spec: %w", err)
 	}
 
+	queryCache := engine.NewQueryCache()
+
 	var queryResultsList []result.QueryResults
 	for _, target := range projectSpec.Files {
-		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target)
+		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target, queryCache)
 		if err != nil {
 			return fmt.Errorf("run target (%s): %w", target.Name, err)
 		}
@@ -127,6 +130,7 @@ func (cliApp *cliApp) BindCLIFlags(fs *pflag.FlagSet) {
 		&cliApp.outputFormat, "output", "o", cliApp.outputFormat,
 		fmt.Sprintf("Output format. Available formats: %s", presenter.AvailableFormatsHelp()),
 	)
+	fs.BoolVarP(&cliApp.enableQueryCache, "enable-query-cache", "", false, "Enable query cache (experimental).")
 	cliApp.failSettings.BindCLIFlags(fs)
 }
 
@@ -163,6 +167,7 @@ func (cliApp *cliApp) queryFileTarget(
 	ctx context.Context,
 	contextRoot string,
 	target project.FileTargetSpec,
+	queryCache engine.QueryCache,
 ) ([]result.QueryResults, error) {
 	resolveToContextRoot := resolveToContextRootFn(contextRoot)
 
@@ -176,7 +181,12 @@ func (cliApp *cliApp) queryFileTarget(
 		return nil, fmt.Errorf("load sources failed: %w", err)
 	}
 
-	queryer, err := engine.QueryWithPolicy(policyPaths).Complete()
+	qb := engine.QueryWithPolicy(policyPaths)
+	if cliApp.enableQueryCache {
+		qb.WithQueueCache(queryCache)
+	}
+
+	queryer, err := qb.Complete()
 	if err != nil {
 		return nil, fmt.Errorf("create queryer failed: %w", err)
 	}

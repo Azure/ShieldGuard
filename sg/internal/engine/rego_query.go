@@ -45,7 +45,9 @@ const PackageMain = "main"
 type RegoEngine struct {
 	policyPackages []policy.Package
 	compiler       *ast.Compiler
+	compilerKey    string
 	limiter        limiter
+	queryCache     QueryCache
 }
 
 var _ Queryer = (*RegoEngine)(nil)
@@ -235,6 +237,31 @@ func (engine *RegoEngine) createRegoInstance(
 }
 
 func (engine *RegoEngine) executeOneQuery(
+	ctx context.Context,
+	parsedInput ast.Value,
+	query string,
+) ([]result.Result, error) {
+	// NOTE: we expect the policy implementation is deterministic, which provides
+	// the same results for the same policy rules, input and query.
+	cacheKey := queryCacheKey{
+		compilerKey: engine.compilerKey,
+		parsedInput: parsedInput,
+		query:       query,
+	}
+	if cachedResults, ok := engine.queryCache.get(cacheKey); ok {
+		return cachedResults, nil
+	}
+
+	results, err := engine.executeOneQuerySlow(ctx, parsedInput, query)
+	if err != nil {
+		return nil, err
+	}
+
+	engine.queryCache.set(cacheKey, results)
+	return results, nil
+}
+
+func (engine *RegoEngine) executeOneQuerySlow(
 	ctx context.Context,
 	parsedInput ast.Value,
 	query string,

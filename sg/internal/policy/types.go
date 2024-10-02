@@ -35,6 +35,9 @@ type Rule struct {
 
 // Package defines the access methods to a policy package.
 type Package interface {
+	// QualifiedID returns the global unique qualified id to a policy package.
+	QualifiedID() string
+
 	// Spec returns the package spec.
 	Spec() PackageSpec
 

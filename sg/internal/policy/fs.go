@@ -7,15 +7,20 @@ import (
 	"github.com/open-policy-agent/opa/loader"
 )
 
+const fsPackageQualifiedIDPrefix = "fs:"
+
 // FSPackage is a policy package loaded from the file system.
 type FSPackage struct {
+	qualifiedID   string
 	packageSpec   PackageSpec
 	rules         []Rule
 	parsedModules map[string]*ast.Module
 }
 
 func loadPackageFromPath(path string) (Package, error) {
-	rv := &FSPackage{}
+	rv := &FSPackage{
+		qualifiedID: fsPackageQualifiedIDPrefix + path,
+	}
 
 	// load rules
 	{
@@ -46,6 +51,10 @@ func loadPackageFromPath(path string) (Package, error) {
 }
 
 var _ Package = (*FSPackage)(nil)
+
+func (p *FSPackage) QualifiedID() string {
+	return p.qualifiedID
+}
 
 func (p *FSPackage) Spec() PackageSpec {
 	return p.packageSpec

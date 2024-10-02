@@ -67,6 +67,10 @@ func Test_LoadPackagesFromPaths_basic(t *testing.T) {
 		assert.NotNil(t, spec.Rule)
 		assert.Equal(t, "https://example.com/docs/{{.SourceFileName}}.md", spec.Rule.DocLink)
 	})
+
+	t.Run("check package qualified id", func(t *testing.T) {
+		assert.Equal(t, "fs:./testdata/basic", pkg.QualifiedID())
+	})
 }
 
 func Test_LoadPackagesFromPaths_no_package_spec(t *testing.T) {
