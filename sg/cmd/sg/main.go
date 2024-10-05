@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/Azure/ShieldGuard/sg/internal/cli/llm"
 	"github.com/Azure/ShieldGuard/sg/internal/cli/test"
 )
 
@@ -25,6 +26,7 @@ func createMainCmd() *cobra.Command {
 
 	rv.AddCommand(
 		test.CreateCLI(),
+		llm.CreateCLI(),
 	)
 
 	return rv
