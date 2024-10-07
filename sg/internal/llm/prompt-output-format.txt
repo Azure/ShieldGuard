@@ -1,0 +1,11 @@
+The input contains the following items:
+- a summary enclosed by <summary> tag for describing the purpose of the source code.
+- the source code will be surrounded by the <sources> and <source> tag.
+
+You should provide answers list enclosed inside <answers>. Each feedback item is enclosed with <answer> tag. Each answer should contain the following information:
+
+- <sourceLocation> tag: The source name and line location of the issue. The format should be "sourceName:lineNumber".
+- <comment> tag: The comment should be a brief and concise description of the issue.
+- <suggestion> tag: The suggestion should be a brief description of the improvement suggestion.
+- <thinking> tag: Provide a detailed step by step explanation of your thought process.
+- <reflection> tag: Provide a honest reflection of your feedback and reflection process by rating yourself on a scale of 1-10 (1 is least confident and 10 is the most confident). Provide rating only.

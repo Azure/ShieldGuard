@@ -7,7 +7,7 @@ func CreateCLI() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "llm [PROJECT-PATH]",
-		Short: "INspect targets under the project with LLM.",
+		Short: "Inspect targets under the project with LLM.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			app.contextRoot = args[0]
