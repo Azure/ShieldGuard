@@ -11,7 +11,6 @@ func CreateCLI() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			app.contextRoot = args[0]
-			app.stdout = cmd.OutOrStdout()
 
 			return app.Run()
 		},

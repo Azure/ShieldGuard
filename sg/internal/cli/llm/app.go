@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Azure/ShieldGuard/sg/internal/llm"
 	"github.com/Azure/ShieldGuard/sg/internal/project"
@@ -15,11 +16,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/openai/openai-go"
 	"github.com/spf13/pflag"
+	"gopkg.in/yaml.v3"
 )
 
 type cliApp struct {
 	projectSpecFile string
 	contextRoot     string
+	logsDir         string
 
 	stdout io.Writer
 }
@@ -123,8 +126,8 @@ func (cliApp *cliApp) queryFileTargetSummary(
 
 func pprint(out io.Writer, category string, format string, args ...interface{}) {
 	category = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FFA07A")).
-		Bold(true).
+		// Foreground(lipgloss.Color("#FFA07A")).
+		// Bold(true).
 		PaddingLeft(1).
 		PaddingRight(1).
 		Width(152).
@@ -231,24 +234,86 @@ func (cliApp *cliApp) queryFileTarget(
 
 	pprint(
 		cliApp.stdout,
-		"summary token usages",
+		"summary token usage",
 		"completionTokens=%d, totalTokens=%d\n",
 		summaryTokenUsage.CompletionTokens,
 		summaryTokenUsage.TotalTokens,
 	)
 	pprint(
 		cliApp.stdout,
-		"analyze token usages",
+		"analyze token usage",
 		"completionTokens=%d, totalTokens=%d\n",
 		chatCompletion.Usage.CompletionTokens,
 		chatCompletion.Usage.TotalTokens,
 	)
 
+	if err := cliApp.logQueryFileTarget(
+		ctx,
+		target,
+		systemPrompt, userPrompt, summary, assistantResponse,
+		summaryTokenUsage, chatCompletion.Usage,
+	); err != nil {
+		return nil, fmt.Errorf("log query file target: %w", err)
+	}
+
 	return nil, nil
+}
+
+type queryFileTarget struct {
+	Target  project.FileTargetSpec `json:"target"`
+	Prompts struct {
+		System string `json:"system"`
+		User   string `json:"user"`
+	} `json:"prompts"`
+	Responses struct {
+		Summary string `json:"summary"`
+		Analyze string `json:"assistant"`
+	} `json:"responses"`
+	Usages struct {
+		Summary openai.CompletionUsage `json:"summary"`
+		Analyze openai.CompletionUsage `json:"analyze"`
+	} `json:"usages"`
+}
+
+func (cliApp *cliApp) logQueryFileTarget(
+	ctx context.Context,
+	target project.FileTargetSpec,
+	systemPrompt string,
+	userPrompt string,
+	summaryResponse string,
+	analyzeResponse string,
+	summaryTokenUsage openai.CompletionUsage,
+	analyzeTokenUsage openai.CompletionUsage,
+) error {
+	d := queryFileTarget{
+		Target: target,
+	}
+	d.Prompts.System = systemPrompt
+	d.Prompts.User = userPrompt
+	d.Responses.Summary = summaryResponse
+	d.Responses.Analyze = analyzeResponse
+	d.Usages.Summary = summaryTokenUsage
+	d.Usages.Analyze = analyzeTokenUsage
+
+	outputFile := filepath.Join(cliApp.logsDir, fmt.Sprintf("%s.yaml", target.Name))
+	output, err := os.Create(outputFile)
+	if err != nil {
+		return fmt.Errorf("create output file: %w", err)
+	}
+	defer output.Close()
+
+	enc := yaml.NewEncoder(output)
+	enc.SetIndent(2)
+	if err := enc.Encode(d); err != nil {
+		return fmt.Errorf("encode output: %w", err)
+	}
+
+	return nil
 }
 
 func (cliApp *cliApp) BindCLIFlags(fs *pflag.FlagSet) {
 	fs.StringVarP(&cliApp.projectSpecFile, "config", "c", project.SpecFileName, "Path to the project spec file.")
+	fs.StringVar(&cliApp.logsDir, "logs-dir", "", "Logs dir to use. Defaults to the $pwd/logs.")
 }
 
 func (cliApp *cliApp) defaults() error {
@@ -268,6 +333,34 @@ func (cliApp *cliApp) defaults() error {
 	cliApp.contextRoot, err = filepath.Abs(cliApp.contextRoot)
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path of the context root: %w", err)
+	}
+
+	if cliApp.logsDir == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("get current working directory: %w", err)
+		}
+
+		logDir := time.Now().Format("2006-01-02-15-04-05")
+
+		cliApp.logsDir = filepath.Join(cwd, "logs", logDir)
+	}
+	cliApp.logsDir, err = filepath.Abs(cliApp.logsDir)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path of the logs dir: %w", err)
+	}
+	if err := os.MkdirAll(cliApp.logsDir, 0755); err != nil {
+		return fmt.Errorf("create logs dir: %w", err)
+	}
+
+	if cliApp.stdout == nil {
+		outputLogsFile := filepath.Join(cliApp.logsDir, "output.log")
+		outputLogs, err := os.Create(outputLogsFile)
+		if err != nil {
+			return fmt.Errorf("create output logs file: %w", err)
+		}
+		// FIXME: outputLogs should be closed at process exit
+		cliApp.stdout = io.MultiWriter(os.Stdout, outputLogs)
 	}
 
 	return nil
