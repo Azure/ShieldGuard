@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -45,6 +46,14 @@ func (cliApp *cliApp) Run() error {
 	if err != nil {
 		return fmt.Errorf("read project spec: %w", err)
 	}
+	var systemPrompt string
+	if f := os.Getenv("SYSTEM_PROMPT_FILE"); f != "" {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("read system prompt file from %q: %w", f, err)
+		}
+		systemPrompt = string(b)
+	}
 
 	llmClient, err := llm.AzureOpenAIClientFromEnv()
 	if err != nil {
@@ -52,7 +61,7 @@ func (cliApp *cliApp) Run() error {
 	}
 
 	for idx, target := range projectSpec.Files {
-		if _, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target, llmClient); err != nil {
+		if _, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target, systemPrompt, llmClient); err != nil {
 			return fmt.Errorf("run target (%s): %w", target.Name, err)
 		}
 
@@ -142,6 +151,7 @@ func (cliApp *cliApp) queryFileTarget(
 	ctx context.Context,
 	contextRoot string,
 	target project.FileTargetSpec,
+	systemPrompt string,
 	llmClient *openai.Client,
 ) ([]any, error) {
 	paths := utils.Map(target.Paths, func(path string) string {
@@ -181,7 +191,7 @@ func (cliApp *cliApp) queryFileTarget(
 		return nil, fmt.Errorf("query file target summary: %w", err)
 	}
 
-	systemPrompt := strings.TrimSpace(target.SystemPrompt)
+	systemPrompt = strings.TrimSpace(systemPrompt)
 	if systemPrompt == "" {
 		systemPrompt = llm.PromptSummarizeTarget()
 	}

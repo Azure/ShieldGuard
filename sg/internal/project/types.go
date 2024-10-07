@@ -24,8 +24,7 @@ type FileTargetSpec struct {
 	// Policies - paths to the policy to load.
 	Policies strListOrMap `json:"policies"`
 	// Data - paths to the (extra) data to load.
-	Data         []string `json:"data"`
-	SystemPrompt string   `json:"systemPrompt"`
+	Data []string `json:"data"`
 }
 
 // strListOrMap is a helper type to support specifying string value using list or map (keys).
