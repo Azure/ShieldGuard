@@ -17,6 +17,13 @@ type Loop struct {
 	client *openai.Client
 }
 
+func New(logger *slog.Logger, client *openai.Client) *Loop {
+	return &Loop{
+		logger: logger,
+		client: client,
+	}
+}
+
 type LoopRunParams struct {
 	Messages      []openai.ChatCompletionMessageParamUnion
 	Agent         Agent
@@ -44,10 +51,8 @@ func (l *Loop) getChatCompletion(
 	}
 
 	params := openai.ChatCompletionNewParams{
-		Messages:   openai.F(messages),
-		Tools:      openai.F(tools),
-		ToolChoice: openai.F(agent.ToolChoice()),
-		Model:      openai.F(agent.Model()),
+		Messages: openai.F(messages),
+		Model:    openai.F(agent.Model()),
 		// TODO: stream
 	}
 	if modelOverride != "" {
@@ -55,6 +60,8 @@ func (l *Loop) getChatCompletion(
 	}
 	if len(tools) > 0 {
 		params.ParallelToolCalls = openai.Bool(agent.ParallelToolsCall())
+		params.ToolChoice = openai.F(agent.ToolChoice())
+		params.Tools = openai.F(tools)
 	}
 
 	return l.client.Chat.Completions.New(ctx, params)
@@ -151,7 +158,7 @@ func (l *Loop) Run(
 		// TODO: record agent name with message
 		history = append(history, message)
 
-		if len(message.ToolCalls) < 1 && !params.ExecuteTools {
+		if len(message.ToolCalls) < 1 || !params.ExecuteTools {
 			l.logger.Debug("no tool calls in completion, stopping")
 			break
 		}

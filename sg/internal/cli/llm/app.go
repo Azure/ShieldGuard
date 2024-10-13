@@ -2,20 +2,24 @@ package llm
 
 import (
 	"context"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/Azure/ShieldGuard/sg/internal/llm"
+	"github.com/Azure/ShieldGuard/sg/internal/llm/swarm"
 	"github.com/Azure/ShieldGuard/sg/internal/project"
 	"github.com/Azure/ShieldGuard/sg/internal/utils"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/openai/openai-go"
 	"github.com/spf13/pflag"
+	"github.com/tidwall/gjson"
 	"gopkg.in/yaml.v3"
 )
 
@@ -151,6 +155,67 @@ func pprint(out io.Writer, category string, format string, args ...interface{}) 
 }
 
 func (cliApp *cliApp) queryFileTarget(
+	ctx context.Context,
+	contextRoot string,
+	target project.FileTargetSpec,
+	systemPrompt string,
+	llmClient *openai.Client,
+) ([]any, error) {
+	paths := utils.Map(target.Paths, func(path string) string {
+		fullPath := filepath.Join(contextRoot, path)
+		fullPath = filepath.Clean(fullPath)
+		return fullPath
+	})
+
+	sources, err := llm.SourcesFromPath(paths).ContextRoot(contextRoot).Complete()
+	if err != nil {
+		return nil, fmt.Errorf("load sources failed: %w", err)
+	}
+
+	var sourceDescs sourceDescs
+	for _, source := range sources {
+		content, err := source.Content()
+		if err != nil {
+			return nil, fmt.Errorf("read source content: %w", err)
+		}
+
+		sourceDescs.Sources = append(sourceDescs.Sources, sourceDesc{
+			Name:    source.Name(),
+			Content: content,
+		})
+	}
+
+	encodedSourceDescs, err := xml.Marshal(sourceDescs)
+	if err != nil {
+		return nil, fmt.Errorf("marshal source descs: %w", err)
+	}
+
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+	logger := slog.Default()
+
+	loop := swarm.New(logger, llmClient)
+	resp, err := loop.Run(ctx, swarm.LoopRunParams{
+		Agent:        AgentTriage,
+		AgentContext: swarm.CreateAgentContext(),
+		Messages: []openai.ChatCompletionMessageParamUnion{
+			openai.UserMessage(string(encodedSourceDescs)),
+		},
+		ExecuteTools: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("run loop: %w", err)
+	}
+	for _, message := range resp.Messages {
+		mm, _ := json.Marshal(message)
+		content := gjson.GetBytes(mm, "content")
+
+		pprint(cliApp.stdout, "message", content.String())
+	}
+
+	return nil, nil
+}
+
+func (cliApp *cliApp) queryFileTarget2(
 	ctx context.Context,
 	contextRoot string,
 	target project.FileTargetSpec,

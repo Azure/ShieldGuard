@@ -7,8 +7,13 @@ import (
 	"github.com/openai/openai-go"
 )
 
+// TODO: declare as interface...
 type AgentContext struct {
 	Parameters map[string]any
+}
+
+func CreateAgentContext() AgentContext {
+	return AgentContext{Parameters: make(map[string]any)}
 }
 
 func (ac AgentContext) Clone() AgentContext {
