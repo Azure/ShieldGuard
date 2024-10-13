@@ -194,22 +194,49 @@ func (cliApp *cliApp) queryFileTarget(
 	logger := slog.Default()
 
 	loop := swarm.New(logger, llmClient)
-	resp, err := loop.Run(ctx, swarm.LoopRunParams{
-		Agent:        AgentTriage,
-		AgentContext: swarm.CreateAgentContext(),
-		Messages: []openai.ChatCompletionMessageParamUnion{
-			openai.UserMessage(string(encodedSourceDescs)),
-		},
-		ExecuteTools: true,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("run loop: %w", err)
-	}
-	for _, message := range resp.Messages {
-		mm, _ := json.Marshal(message)
-		content := gjson.GetBytes(mm, "content")
 
-		pprint(cliApp.stdout, "message", content.String())
+	var analyzeMessages []openai.ChatCompletionMessageParamUnion
+	{
+		resp, err := loop.Run(ctx, swarm.LoopRunParams{
+			Agent:        AgentTriage,
+			AgentContext: swarm.CreateAgentContext(),
+			Messages: []openai.ChatCompletionMessageParamUnion{
+				openai.UserMessage(string(encodedSourceDescs)),
+			},
+			ExecuteTools: true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("run loop: %w", err)
+		}
+		for _, message := range resp.Messages {
+			mm, _ := json.Marshal(message)
+			content := gjson.GetBytes(mm, "content")
+
+			pprint(cliApp.stdout, "message", content.String())
+		}
+
+		analyzeMessages = resp.Messages
+	}
+	{
+		resp, err := loop.Run(ctx, swarm.LoopRunParams{
+			Agent:        AgentTriage,
+			AgentContext: swarm.CreateAgentContext(),
+			Messages: append(
+				analyzeMessages,
+				openai.UserMessage("summarize above results and response as the mentioned XML format"),
+				openai.AssistantMessage("<feedbacks>"),
+			),
+			ExecuteTools: true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("run loop: %w", err)
+		}
+		for _, message := range resp.Messages {
+			mm, _ := json.Marshal(message)
+			content := gjson.GetBytes(mm, "content")
+
+			pprint(cliApp.stdout, "message", content.String())
+		}
 	}
 
 	return nil, nil

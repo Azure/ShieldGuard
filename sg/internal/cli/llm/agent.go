@@ -60,16 +60,41 @@ var AgentAnalyzeServicePort = swarm.AgentDecl{
 	},
 }.Build()
 
+var testFunction = swarm.ToAgentFunctionOrPanic(
+	"test",
+	"Verify the output. The first argument is the input text to summarize. This function should be called as the last function.",
+	func(input string) (string, error) {
+		return input, nil
+	},
+)
+
 var AgentTriage = swarm.AgentDecl{
-	Name:         "triage",
-	Description:  `Triage the input text.`,
-	Model:        openai.ChatModelGPT4o,
-	Instructions: swarm.AgentInstructions("Read and understand the input text. React based on the suer input content. You can perform multiple analysis in parallel. Summarize your findings."),
-	ToolChoice:   openai.ChatCompletionToolChoiceOptionStringAuto,
+	Name:        "triage",
+	Description: `Triage the input text.`,
+	Model:       openai.ChatModelGPT4o,
+	Instructions: swarm.AgentInstructions(`
+Read and understand the input text. React based on the suer input content. You can perform multiple analysis in parallel.
+
+Summarize the output from multiple analysis. Put output as XML format under the <feedbacks>. Each analysis output should be a child element enclosed with <answer> tag.
+Each answer should contain the following information:
+
+- <analyze-type> tag: the type of analysis
+- <result> tag: the result of the analysis
+- <suggestion> tag: the suggestion based on the analysis result
+- <comment> tag: any additional comments
+- <thinking> tag: the thought process of the analysis
+- <reflection> tag: provide a honest reflection of your feedback and reflection process by rating yourself on a scale of 1-10 (1 is least and 10 is most). Provide rating only.
+
+Make sure your final output is well-formatted XML. Run the "test" function call as the last before submitting the final output.
+
+Call this agent for general questions and when no other agent is correct for the user query.
+`),
+	ToolChoice: openai.ChatCompletionToolChoiceOptionStringAuto,
 	Functions: []swarm.AgentFunction{
 		summary,
 		analyzeServiceAccountUsage,
 		swarm.AgentToFunction(AgentAnalyzeServicePort),
+		testFunction,
 	},
 	ParallelToolsCall: true,
 }.Build()
