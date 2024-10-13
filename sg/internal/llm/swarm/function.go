@@ -88,6 +88,7 @@ func goFunctionToAgentFunction(
 	var (
 		hasCtxArg      bool
 		hasAgentCtxArg bool
+		argNames       []string
 	)
 	argSchemas := map[string]map[string]any{}
 	for i := 0; i < fType.NumIn(); i++ {
@@ -119,7 +120,8 @@ func goFunctionToAgentFunction(
 			}
 		}
 
-		argName := fmt.Sprintf("arg%d", len(argSchemas))
+		argName := fmt.Sprintf("arg%d", len(argNames))
+		argNames = append(argNames, argName)
 		argSchemas[argName] = map[string]any{
 			"type": goTypeToJSONSchemaType(arg),
 			// TODO: add description...
@@ -160,7 +162,8 @@ func goFunctionToAgentFunction(
 		if hasAgentCtxArg {
 			invokeArgs = append(invokeArgs, reflect.ValueOf(agentCtx))
 		}
-		for argName, argSchema := range argSchemas {
+		for _, argName := range argNames {
+			argSchema := argSchemas[argName]
 			v := gjson.GetBytes(arguments, argName)
 			var argValue reflect.Value
 			switch argSchema["type"] {
