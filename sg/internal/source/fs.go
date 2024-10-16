@@ -3,6 +3,7 @@ package source
 import (
 	"fmt"
 	"io/fs"
+	"maps"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -84,6 +85,7 @@ func loadSourceFromPaths(contextRoot string, paths []string) ([]Source, error) {
 	relativeToContextRoot := relativeToContextRootFn(contextRoot)
 
 	var files []string
+	var jsonFiles []string
 
 	walk := func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
@@ -95,7 +97,11 @@ func loadSourceFromPaths(contextRoot string, paths []string) ([]Source, error) {
 		}
 
 		if parser.FileSupported(path) {
-			files = append(files, path)
+			if strings.EqualFold(filepath.Ext(path)[1:], parser.JSON) {
+				jsonFiles = append(jsonFiles, path)
+			} else {
+				files = append(files, path)
+			}
 		}
 
 		return nil
@@ -107,14 +113,21 @@ func loadSourceFromPaths(contextRoot string, paths []string) ([]Source, error) {
 		}
 	}
 
-	if len(files) < 1 {
+	if len(files)+len(jsonFiles) < 1 {
 		return nil, fmt.Errorf("no files found from given paths: %v", paths)
 	}
 
+	// parse json files with jsonc to allow comments
+	jsonConfigurations, err := parser.ParseConfigurationsAs(jsonFiles, parser.JSONC)
+	if err != nil {
+		return nil, fmt.Errorf("parse configurations: %w", err)
+	}
 	configurations, err := parser.ParseConfigurations(files)
 	if err != nil {
 		return nil, fmt.Errorf("parse configurations: %w", err)
 	}
+	maps.Copy(configurations, jsonConfigurations)
+
 	filePathsSorted := make([]string, 0, len(configurations))
 	for filePath := range configurations {
 		filePathsSorted = append(filePathsSorted, filePath)
