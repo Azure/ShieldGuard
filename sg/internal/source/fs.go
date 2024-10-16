@@ -97,7 +97,7 @@ func loadSourceFromPaths(contextRoot string, paths []string) ([]Source, error) {
 		}
 
 		if parser.FileSupported(path) {
-			if filepath.Ext(path) == ".json" {
+			if strings.EqualFold(filepath.Ext(path)[1:], parser.JSON) {
 				jsonFiles = append(jsonFiles, path)
 			} else {
 				files = append(files, path)
