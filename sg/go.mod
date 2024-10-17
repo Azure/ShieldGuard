@@ -1,10 +1,12 @@
 module github.com/Azure/ShieldGuard/sg
 
 go 1.21.0
+toolchain go1.23.2
 
 require (
+	github.com/OneOfOne/xxhash v1.2.8
 	github.com/b4fun/ci v0.4.0
-	github.com/open-policy-agent/conftest v0.55.0
+	github.com/open-policy-agent/conftest v0.56.0
 	github.com/open-policy-agent/opa v0.69.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/cobra v1.8.1
@@ -14,11 +16,10 @@ require (
 )
 
 require (
-	cuelang.org/go v0.9.2 // indirect
+	cuelang.org/go v0.10.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
-	github.com/CycloneDX/cyclonedx-go v0.9.0 // indirect
+	github.com/CycloneDX/cyclonedx-go v0.9.1 // indirect
 	github.com/KeisukeYamashita/go-vcl v0.4.0 // indirect
-	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/agnivade/levenshtein v1.2.0 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
@@ -28,7 +29,7 @@ require (
 	github.com/bufbuild/protocompile v0.6.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
-	github.com/containerd/typeurl/v2 v2.1.1 // indirect
+	github.com/containerd/typeurl/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -47,7 +48,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/moby/buildkit v0.15.1 // indirect
+	github.com/moby/buildkit v0.16.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
@@ -83,8 +84,8 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
+	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/net v0.29.0 // indirect
-	golang.org/x/oauth2 v0.22.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
