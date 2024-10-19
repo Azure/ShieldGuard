@@ -20,4 +20,4 @@
 dist/
 
 # local hack
-swarmctl/
+swarmctl
