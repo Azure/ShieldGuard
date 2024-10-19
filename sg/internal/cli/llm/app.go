@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/Azure/ShieldGuard/sg/internal/llm"
-	"github.com/Azure/ShieldGuard/sg/internal/llm/swarm"
 	"github.com/Azure/ShieldGuard/sg/internal/project"
 	"github.com/Azure/ShieldGuard/sg/internal/utils"
+	"github.com/b4fun/swarmctl/swarm"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/openai/openai-go"
 	"github.com/spf13/pflag"
@@ -193,13 +193,13 @@ func (cliApp *cliApp) queryFileTarget(
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	logger := slog.Default()
 
-	loop := swarm.New(logger, llmClient)
+	loop := swarm.NewLoop(logger, llmClient)
 
 	var analyzeMessages []openai.ChatCompletionMessageParamUnion
 	{
 		resp, err := loop.Run(ctx, swarm.LoopRunParams{
 			Agent:        AgentTriage,
-			AgentContext: swarm.CreateAgentContext(),
+			AgentContext: swarm.NewAgentContext(),
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage(string(encodedSourceDescs)),
 			},
@@ -220,7 +220,7 @@ func (cliApp *cliApp) queryFileTarget(
 	{
 		resp, err := loop.Run(ctx, swarm.LoopRunParams{
 			Agent:        AgentTriage,
-			AgentContext: swarm.CreateAgentContext(),
+			AgentContext: swarm.NewAgentContext(),
 			Messages: append(
 				analyzeMessages,
 				openai.UserMessage("summarize above results and response as the mentioned XML format"),

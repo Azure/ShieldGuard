@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Azure/ShieldGuard/sg/internal/llm/swarm"
+	"github.com/b4fun/swarmctl/swarm"
 	"github.com/openai/openai-go"
 )
 
@@ -30,21 +30,26 @@ var AgentAnalyzeServiceAccountUsage = swarm.AgentDecl{
 
 var analyzeServiceAccountUsage = swarm.AgentToFunction(AgentAnalyzeServiceAccountUsage)
 
+type paramAnalyzeServicePort struct {
+	SvcType string `json:"svcType" json_desc:"The type of the k8s service."`
+	Port    int64  `json:"port" json_desc:"The exposed port of the service."`
+}
+
 var analyzeServicePort = swarm.ToAgentFunctionOrPanic(
 	"check-port",
-	"Analyze the exposed port for a service. The first argument is the k8s service type (LoadBalancer / ClusterIP / NodePort etc) and the second argument is the port number. Invoke more times to check multiple ports.",
-	func(svcType string, port int64) (string, error) {
-		if strings.ToLower(svcType) == "clusterip" {
+	"Analyze the exposed port for a service.",
+	func(param paramAnalyzeServicePort) (string, error) {
+		if strings.ToLower(param.SvcType) == "clusterip" {
 			return "Service type is ClusterIP. No need to check exposed ports.", nil
 		}
 
-		if port == 80 {
+		if param.Port == 80 {
 			return "Port 80 is exposed. Consider using HTTPS instead.", nil
 		}
-		if port == 443 {
+		if param.Port == 443 {
 			return "Port 443 is exposed. Make sure it is secure.", nil
 		}
-		return fmt.Sprintf("Port %d is exposed. Check if it is necessary.", port), nil
+		return fmt.Sprintf("Port %d is exposed. Check if it is necessary.", param.Port), nil
 	},
 )
 
@@ -59,14 +64,6 @@ var AgentAnalyzeServicePort = swarm.AgentDecl{
 		analyzeServicePort,
 	},
 }.Build()
-
-var testFunction = swarm.ToAgentFunctionOrPanic(
-	"test",
-	"Verify the output. The first argument is the input text to summarize. This function should be called as the last function.",
-	func(input string) (string, error) {
-		return input, nil
-	},
-)
 
 var AgentTriage = swarm.AgentDecl{
 	Name:        "triage",
@@ -94,7 +91,13 @@ Call this agent for general questions and when no other agent is correct for the
 		summary,
 		analyzeServiceAccountUsage,
 		swarm.AgentToFunction(AgentAnalyzeServicePort),
-		testFunction,
 	},
 	ParallelToolsCall: true,
 }.Build()
+
+func init() {
+	triage := swarm.AgentToFunction(AgentTriage)
+
+	AgentAnalyzeServicePort.HackAddFunction(triage)
+	AgentAnalyzeServiceAccountUsage.HackAddFunction(triage)
+}

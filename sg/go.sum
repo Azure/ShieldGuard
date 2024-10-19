@@ -202,8 +202,8 @@ github.com/open-policy-agent/conftest v0.55.0 h1:M6QXrrfQjmyFRsy11Q2ucFGNbbelhya
 github.com/open-policy-agent/conftest v0.55.0/go.mod h1:qL8de2Sr5QsDG0HVM3iZiHS2Qea3bLzut6OsYyiRyEY=
 github.com/open-policy-agent/opa v0.69.0 h1:s2igLw2Z6IvGWGuXSfugWkVultDMsM9pXiDuMp7ckWw=
 github.com/open-policy-agent/opa v0.69.0/go.mod h1:+qyXJGkpEJ6kpB1kGo8JSwHtVXbTdsGdQYPWWNYNj+4=
-github.com/openai/openai-go v0.1.0-alpha.25 h1:ZP2QKoP9g9L8du7AuDix/QsHk0TV5t0Wp5a6bBsM9No=
-github.com/openai/openai-go v0.1.0-alpha.25/go.mod h1:3SdE6BffOX9HPEQv8IL/fi3LYZ5TUpRYaqGQZbyk11A=
+github.com/openai/openai-go v0.1.0-alpha.26 h1:vDQF91WYAlhVifoa7bInwzwJyKQhE/ZgS0P8VQMudD0=
+github.com/openai/openai-go v0.1.0-alpha.26/go.mod h1:3SdE6BffOX9HPEQv8IL/fi3LYZ5TUpRYaqGQZbyk11A=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQb2IpWsCzug=
