@@ -3,12 +3,13 @@ module github.com/Azure/ShieldGuard/sg
 go 1.21.0
 
 require (
+	github.com/OneOfOne/xxhash v1.2.8
 	github.com/b4fun/ci v0.4.0
 	github.com/open-policy-agent/conftest v0.55.0
 	github.com/open-policy-agent/opa v0.69.0
 	github.com/sourcegraph/conc v0.3.0
-	github.com/spf13/cobra v1.8.1
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/cobra v1.9.1
+	github.com/spf13/pflag v1.0.6
 	github.com/stretchr/testify v1.9.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -18,7 +19,6 @@ require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/CycloneDX/cyclonedx-go v0.9.0 // indirect
 	github.com/KeisukeYamashita/go-vcl v0.4.0 // indirect
-	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/agnivade/levenshtein v1.2.0 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
