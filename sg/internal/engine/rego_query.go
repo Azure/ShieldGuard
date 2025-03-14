@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
@@ -19,7 +20,33 @@ type loadedConfiguration struct {
 	Configuration ast.Value
 }
 
-func loadSource(source source.Source) ([]loadedConfiguration, error) {
+type Visitor struct {
+	parentKey string
+	defaults  map[ast.Value]ast.Value
+}
+
+func (v *Visitor) Visit(x interface{}) ast.Visitor {
+	n, ok := x.(*ast.Term)
+	if ok {
+		// add key:val to defaults mapping
+		hasDefault := n.Get(ast.StringTerm("defaultValue"))
+		if hasDefault != nil {
+			k := fmt.Sprintf("[parameters(%s)]", v.parentKey)
+			key := ast.StringTerm(k)
+			v.defaults[key.Value] = hasDefault.Value
+		} else {
+			v.parentKey = strings.ReplaceAll(n.String(), "\"", "'")
+		}
+
+		// query defaults mapping
+		if val, exists := v.defaults[n.Value]; exists {
+			n.Value = val
+		}
+	}
+	return v
+}
+
+func loadSource(source source.Source, shouldParseArmTemplateDefaults bool) ([]loadedConfiguration, error) {
 	var rv []loadedConfiguration
 
 	configurations, err := source.ParsedConfigurations()
@@ -28,9 +55,16 @@ func loadSource(source source.Source) ([]loadedConfiguration, error) {
 	}
 
 	for _, configuration := range configurations {
+		t := ast.NewTerm(configuration)
+
+		if shouldParseArmTemplateDefaults {
+			// replace all params with defaultValues
+			ast.Walk(&Visitor{defaults: map[ast.Value]ast.Value{}}, t)
+		}
+
 		rv = append(rv, loadedConfiguration{
 			Name:          source.Name(),
-			Configuration: configuration,
+			Configuration: t.Value,
 		})
 	}
 
@@ -55,9 +89,9 @@ var _ Queryer = (*RegoEngine)(nil)
 func (engine *RegoEngine) Query(
 	ctx context.Context,
 	source source.Source,
-	opts ...*QueryOptions,
+	opts *QueryOptions,
 ) (result.QueryResults, error) {
-	loadedConfigurations, err := loadSource(source)
+	loadedConfigurations, err := loadSource(source, opts.ParseArmTemplateDefaults)
 	if err != nil {
 		return result.QueryResults{}, fmt.Errorf("failed to load source: %w", err)
 	}

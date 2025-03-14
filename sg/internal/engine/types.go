@@ -10,6 +10,7 @@ import (
 
 // QueryOptions controls the query behavior.
 type QueryOptions struct {
+	ParseArmTemplateDefaults bool
 }
 
 // Queryer performs queries against a target.
@@ -19,7 +20,7 @@ type Queryer interface {
 	Query(
 		ctx context.Context,
 		source source.Source,
-		opts ...*QueryOptions,
+		opts *QueryOptions,
 	) (result.QueryResults, error)
 }
 
