@@ -3,6 +3,7 @@ module github.com/Azure/ShieldGuard/sg
 go 1.21.0
 
 require (
+	github.com/OneOfOne/xxhash v1.2.8
 	github.com/b4fun/ci v0.4.0
 	github.com/open-policy-agent/conftest v0.55.0
 	github.com/open-policy-agent/opa v0.69.0
@@ -13,12 +14,13 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+replace muzzammil.xyz/jsonc => github.com/muhammadmuzzammil1998/jsonc v1.0.0
+
 require (
 	cuelang.org/go v0.9.2 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/CycloneDX/cyclonedx-go v0.9.0 // indirect
 	github.com/KeisukeYamashita/go-vcl v0.4.0 // indirect
-	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/agnivade/levenshtein v1.2.0 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20221118182256-c68fdcfa2092 // indirect
