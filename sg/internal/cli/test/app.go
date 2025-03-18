@@ -199,7 +199,7 @@ func (cliApp *cliApp) queryFileTarget(
 	}
 
 	return queryMapper.MapErr(sources, func(s *source.Source) (result.QueryResults, error) {
-		return queryer.Query(ctx, *s,  &engine.QueryOptions{})
+		return queryer.Query(ctx, *s, &engine.QueryOptions{})
 	})
 }
 

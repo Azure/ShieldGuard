@@ -10,7 +10,6 @@ import (
 
 // QueryOptions controls the query behavior.
 type QueryOptions struct {
-	ParseArmTemplateDefaults bool
 }
 
 // Queryer performs queries against a target.
