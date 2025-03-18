@@ -20,7 +20,7 @@ type Queryer interface {
 	Query(
 		ctx context.Context,
 		source source.Source,
-		opts *QueryOptions,
+		opts ...*QueryOptions,
 	) (result.QueryResults, error)
 }
 

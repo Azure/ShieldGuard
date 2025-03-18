@@ -82,6 +82,53 @@ func Test_Integration_Basic(t *testing.T) {
 	}
 }
 
+func Test_Integration_Basic_QueryWithParsingArmTemplateDefaults(t *testing.T) {
+	t.Parallel()
+
+	queryer, err := QueryWithPolicy([]string{
+		"./testdata/arm/policy",
+	}).Complete()
+	assert.NoError(t, err)
+	assert.NotNil(t, queryer)
+
+	sources, err := source.FromPath([]string{
+		"./testdata/arm/configurations",
+	}).Complete()
+	assert.NoError(t, err)
+	assert.Len(t, sources, 1)
+	dataYAMLSource := sources[0]
+
+	ctx := context.Background()
+
+	queryResult, err := queryer.Query(ctx, dataYAMLSource)
+	assert.NoError(t, err)
+	assert.Equal(t, queryResult.Source, dataYAMLSource)
+	assert.Equal(t, queryResult.Successes, 0, "one document passes the test")
+	assert.Len(t, queryResult.Failures, 1, "one document fails the test")
+	{
+		failureResult := queryResult.Failures[0]
+		assert.Equal(t, failureResult.Message, "mustBeTrue is not set or set to false")
+		assert.Equal(t, failureResult.Query, "data.main.deny_must_be_true")
+		assert.Equal(t, failureResult.Rule.Kind, policy.QueryKindDeny)
+		assert.Equal(t, failureResult.Rule.Name, "must_be_true")
+		assert.Equal(t, failureResult.Rule.Namespace, "main")
+		assert.Equal(t, failureResult.RuleDocLink, "https://example.com/must_be_true-deny-001-policy")
+	}
+
+
+	queryer, err = QueryWithPolicy([]string{
+		"./testdata/arm/policy",
+	}).QueryWithParsingArmTemplateDefaults(true).Complete()
+	assert.NoError(t, err)
+	assert.NotNil(t, queryer)
+
+	queryResult, err = queryer.Query(ctx, dataYAMLSource)
+	assert.NoError(t, err)
+	assert.Equal(t, queryResult.Source, dataYAMLSource)
+	assert.Equal(t, queryResult.Successes, 1, "one document passes the test")
+	assert.Len(t, queryResult.Failures, 0, "one document fails the test")
+}
+
 func Test_Integration_Basic_QueryCacheEnabled(t *testing.T) {
 	t.Parallel()
 

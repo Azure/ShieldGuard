@@ -82,6 +82,7 @@ type RegoEngine struct {
 	compilerKey    string
 	limiter        limiter
 	queryCache     QueryCache
+	parseArmTemplateDefaults bool
 }
 
 var _ Queryer = (*RegoEngine)(nil)
@@ -89,9 +90,9 @@ var _ Queryer = (*RegoEngine)(nil)
 func (engine *RegoEngine) Query(
 	ctx context.Context,
 	source source.Source,
-	opts *QueryOptions,
+	opts ...*QueryOptions,
 ) (result.QueryResults, error) {
-	loadedConfigurations, err := loadSource(source, opts.ParseArmTemplateDefaults)
+	loadedConfigurations, err := loadSource(source, engine.parseArmTemplateDefaults)
 	if err != nil {
 		return result.QueryResults{}, fmt.Errorf("failed to load source: %w", err)
 	}

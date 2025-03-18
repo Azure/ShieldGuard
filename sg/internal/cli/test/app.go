@@ -187,6 +187,7 @@ func (cliApp *cliApp) queryFileTarget(
 	if cliApp.enableQueryCache {
 		qb.WithQueueCache(queryCache)
 	}
+	qb.QueryWithParsingArmTemplateDefaults(cliApp.parseArmTemplateDefaults)
 
 	queryer, err := qb.Complete()
 	if err != nil {
@@ -198,7 +199,7 @@ func (cliApp *cliApp) queryFileTarget(
 	}
 
 	return queryMapper.MapErr(sources, func(s *source.Source) (result.QueryResults, error) {
-		return queryer.Query(ctx, *s, &engine.QueryOptions{ParseArmTemplateDefaults: cliApp.parseArmTemplateDefaults})
+		return queryer.Query(ctx, *s,  &engine.QueryOptions{})
 	})
 }
 
