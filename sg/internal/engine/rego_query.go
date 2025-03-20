@@ -3,12 +3,12 @@ package engine
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/sourcegraph/conc/iter"
 
+	"github.com/Azure/ShieldGuard/sg/internal/parser"
 	"github.com/Azure/ShieldGuard/sg/internal/policy"
 	"github.com/Azure/ShieldGuard/sg/internal/result"
 	"github.com/Azure/ShieldGuard/sg/internal/source"
@@ -18,32 +18,6 @@ import (
 type loadedConfiguration struct {
 	Name          string
 	Configuration ast.Value
-}
-
-type Visitor struct {
-	parentKey string
-	defaults  map[ast.Value]ast.Value
-}
-
-func (v *Visitor) Visit(x interface{}) ast.Visitor {
-	n, ok := x.(*ast.Term)
-	if ok {
-		// add key:val to defaults mapping
-		hasDefault := n.Get(ast.StringTerm("defaultValue"))
-		if hasDefault != nil {
-			k := fmt.Sprintf("[parameters(%s)]", v.parentKey)
-			key := ast.StringTerm(k)
-			v.defaults[key.Value] = hasDefault.Value
-		} else {
-			v.parentKey = strings.ReplaceAll(n.String(), "\"", "'")
-		}
-
-		// query defaults mapping
-		if val, exists := v.defaults[n.Value]; exists {
-			n.Value = val
-		}
-	}
-	return v
 }
 
 func loadSource(source source.Source, shouldParseArmTemplateDefaults bool) ([]loadedConfiguration, error) {
@@ -58,8 +32,7 @@ func loadSource(source source.Source, shouldParseArmTemplateDefaults bool) ([]lo
 		t := ast.NewTerm(configuration)
 
 		if shouldParseArmTemplateDefaults {
-			// replace all params with defaultValues
-			ast.Walk(&Visitor{defaults: map[ast.Value]ast.Value{}}, t)
+			parser.ParseArmTemplateDefaults(t)
 		}
 
 		rv = append(rv, loadedConfiguration{
@@ -77,11 +50,11 @@ const PackageMain = "main"
 
 // RegoEngine is the OPA based query engine implementation.
 type RegoEngine struct {
-	policyPackages []policy.Package
-	compiler       *ast.Compiler
-	compilerKey    string
-	limiter        limiter
-	queryCache     QueryCache
+	policyPackages           []policy.Package
+	compiler                 *ast.Compiler
+	compilerKey              string
+	limiter                  limiter
+	queryCache               QueryCache
 	parseArmTemplateDefaults bool
 }
 
