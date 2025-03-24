@@ -1,4 +1,4 @@
-package parser
+package armtemplateparser
 
 import (
 	"fmt"
@@ -33,6 +33,13 @@ func (v *visitor) Visit(x interface{}) ast.Visitor {
 	return v
 }
 
+// Replaces parameters with their default values in ARM templates
+//
+// It renders expressions like:
+//
+//	"[parameters('paramName')]" -> "defaultParamName"
+//
+// by substituting the parameter values from the provided default value.
 func ParseArmTemplateDefaults(t *ast.Term) {
 	ast.Walk(&visitor{defaults: map[ast.Value]ast.Value{}}, t)
 }

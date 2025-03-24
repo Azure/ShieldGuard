@@ -8,7 +8,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/sourcegraph/conc/iter"
 
-	"github.com/Azure/ShieldGuard/sg/internal/parser"
+	"github.com/Azure/ShieldGuard/sg/internal/armtemplateparser"
 	"github.com/Azure/ShieldGuard/sg/internal/policy"
 	"github.com/Azure/ShieldGuard/sg/internal/result"
 	"github.com/Azure/ShieldGuard/sg/internal/source"
@@ -32,7 +32,7 @@ func loadSource(source source.Source, shouldParseArmTemplateDefaults bool) ([]lo
 		t := ast.NewTerm(configuration)
 
 		if shouldParseArmTemplateDefaults {
-			parser.ParseArmTemplateDefaults(t)
+			armtemplateparser.ParseArmTemplateDefaults(t)
 		}
 
 		rv = append(rv, loadedConfiguration{

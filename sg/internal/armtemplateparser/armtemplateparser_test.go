@@ -1,4 +1,4 @@
-package parser
+package armtemplateparser
 
 import (
 	"encoding/json"
@@ -36,7 +36,34 @@ func Test_ParseArmTemplateDefaults(t *testing.T) {
 
 	// should not contain param after parsing
 	assert.False(t, strings.Contains(term.Value.String(), "[parameters('myParam')]"))
+}
 
+func Test_ParseArmTemplateDefaultsNoDefaultValue(t *testing.T) {
+	t.Parallel()
+
+	jsonStr := `{
+		"parameters": {
+			"myParam": {
+				"type": "bool"
+			}
+		},
+		"resources": [
+			{
+				"name": "MyResource",
+				"properties": {
+					"mustBeTrue": "[parameters('myParam')]"
+				}
+			}
+		]
+	}`
+
+	term := jsonToTerm(t, jsonStr)
+
+	// parse defaults
+	ParseArmTemplateDefaults(term)
+
+	// should contain param after parsing
+	assert.True(t, strings.Contains(term.Value.String(), "[parameters('myParam')]"))
 }
 
 // helper function to convert string to *ast.Term
