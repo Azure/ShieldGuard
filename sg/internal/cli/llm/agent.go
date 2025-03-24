@@ -31,7 +31,8 @@ var AgentAnalyzeServiceAccountUsage = swarm.AgentDecl{
 var analyzeServiceAccountUsage = swarm.AgentToFunction(AgentAnalyzeServiceAccountUsage)
 
 type paramAnalyzeServicePort struct {
-	SvcType string `json:"svcType" json_desc:"The type of the k8s service."`
+	SvcName string `json:"svcName" json_desc:"The name of the k8s service."`
+	SvcType string `json:"svcType" json_desc:"The type of the k8s service (cluster ip / loadbalancer etc)."`
 	Port    int64  `json:"port" json_desc:"The exposed port of the service."`
 }
 
@@ -49,7 +50,7 @@ var analyzeServicePort = swarm.ToAgentFunctionOrPanic(
 		if param.Port == 443 {
 			return "Port 443 is exposed. Make sure it is secure.", nil
 		}
-		return fmt.Sprintf("Port %d is exposed. Check if it is necessary.", param.Port), nil
+		return fmt.Sprintf("Port %d from service %q is exposed. Check if it is necessary.", param.Port, param.SvcName), nil
 	},
 )
 
