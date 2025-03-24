@@ -23,6 +23,11 @@ func Test_loadSourceFromPaths(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Len(t, configs, 1)
 			},
+			"template.json": func(source Source) {
+				configs, err := source.ParsedConfigurations()
+				assert.NoError(t, err)
+				assert.Len(t, configs, 1)
+			},
 		}
 		assert.Len(t, sources, len(checkers))
 
