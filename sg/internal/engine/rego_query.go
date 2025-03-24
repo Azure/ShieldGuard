@@ -8,6 +8,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/sourcegraph/conc/iter"
 
+	"github.com/Azure/ShieldGuard/sg/internal/armtemplateparser"
 	"github.com/Azure/ShieldGuard/sg/internal/policy"
 	"github.com/Azure/ShieldGuard/sg/internal/result"
 	"github.com/Azure/ShieldGuard/sg/internal/source"
@@ -19,7 +20,7 @@ type loadedConfiguration struct {
 	Configuration ast.Value
 }
 
-func loadSource(source source.Source) ([]loadedConfiguration, error) {
+func loadSource(source source.Source, shouldParseArmTemplateDefaults bool) ([]loadedConfiguration, error) {
 	var rv []loadedConfiguration
 
 	configurations, err := source.ParsedConfigurations()
@@ -28,9 +29,15 @@ func loadSource(source source.Source) ([]loadedConfiguration, error) {
 	}
 
 	for _, configuration := range configurations {
+		t := ast.NewTerm(configuration)
+
+		if shouldParseArmTemplateDefaults {
+			armtemplateparser.ParseArmTemplateDefaults(t)
+		}
+
 		rv = append(rv, loadedConfiguration{
 			Name:          source.Name(),
-			Configuration: configuration,
+			Configuration: t.Value,
 		})
 	}
 
@@ -43,11 +50,12 @@ const PackageMain = "main"
 
 // RegoEngine is the OPA based query engine implementation.
 type RegoEngine struct {
-	policyPackages []policy.Package
-	compiler       *ast.Compiler
-	compilerKey    string
-	limiter        limiter
-	queryCache     QueryCache
+	policyPackages           []policy.Package
+	compiler                 *ast.Compiler
+	compilerKey              string
+	limiter                  limiter
+	queryCache               QueryCache
+	parseArmTemplateDefaults bool
 }
 
 var _ Queryer = (*RegoEngine)(nil)
@@ -57,7 +65,7 @@ func (engine *RegoEngine) Query(
 	source source.Source,
 	opts ...*QueryOptions,
 ) (result.QueryResults, error) {
-	loadedConfigurations, err := loadSource(source)
+	loadedConfigurations, err := loadSource(source, engine.parseArmTemplateDefaults)
 	if err != nil {
 		return result.QueryResults{}, fmt.Errorf("failed to load source: %w", err)
 	}

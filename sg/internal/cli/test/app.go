@@ -66,11 +66,12 @@ func (s *failSettings) CheckQueryResults(results []result.QueryResults) error {
 
 // cliApp is the CLI cliApplication for the test subcommand.
 type cliApp struct {
-	projectSpecFile  string
-	contextRoot      string
-	outputFormat     string
-	failSettings     *failSettings
-	enableQueryCache bool
+	projectSpecFile          string
+	contextRoot              string
+	outputFormat             string
+	failSettings             *failSettings
+	enableQueryCache         bool
+	parseArmTemplateDefaults bool
 
 	stdout io.Writer
 }
@@ -131,6 +132,7 @@ func (cliApp *cliApp) BindCLIFlags(fs *pflag.FlagSet) {
 		fmt.Sprintf("Output format. Available formats: %s", presenter.AvailableFormatsHelp()),
 	)
 	fs.BoolVarP(&cliApp.enableQueryCache, "enable-query-cache", "", false, "Enable query cache (experimental).")
+	fs.BoolVarP(&cliApp.parseArmTemplateDefaults, "parse-defaults", "p", false, "Parse default values from arm templates (experimental).")
 	cliApp.failSettings.BindCLIFlags(fs)
 }
 
@@ -185,6 +187,7 @@ func (cliApp *cliApp) queryFileTarget(
 	if cliApp.enableQueryCache {
 		qb.WithQueueCache(queryCache)
 	}
+	qb.QueryWithParsingArmTemplateDefaults(cliApp.parseArmTemplateDefaults)
 
 	queryer, err := qb.Complete()
 	if err != nil {

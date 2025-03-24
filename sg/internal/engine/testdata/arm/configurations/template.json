@@ -1,0 +1,16 @@
+{
+    "parameters": {
+        "myParam": {
+            "type": "bool",
+            "defaultValue": true
+        }
+    },
+    "resources": [
+        {
+            "name": "MyResource",
+            "properties": {
+                "mustBeTrue": "[parameters('myParam')]"
+            }
+        }
+    ]
+}

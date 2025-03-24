@@ -8,9 +8,10 @@ import (
 
 // QueryerBuilder constructs a Queryer.
 type QueryerBuilder struct {
-	packages   []policy.Package
-	queryCache QueryCache
-	err        error
+	packages                 []policy.Package
+	queryCache               QueryCache
+	err                      error
+	parseArmTemplateDefaults bool
 }
 
 // QueryWithPolicy creates a QueryerBuilder with loading packages from the given paths.
@@ -24,6 +25,12 @@ func QueryWithPolicy(policyPaths []string) *QueryerBuilder {
 		return qb
 	}
 
+	return qb
+}
+
+// QueryWithParsingArmTemplateDefaults creates a QueryerBuilder that parses arm template default values
+func (qb *QueryerBuilder) QueryWithParsingArmTemplateDefaults(shouldParseDefaults bool) *QueryerBuilder {
+	qb.parseArmTemplateDefaults = shouldParseDefaults
 	return qb
 }
 
@@ -51,8 +58,9 @@ func (qb *QueryerBuilder) Complete() (Queryer, error) {
 		// NOTE: we limit the actual query by CPU count as policy evaluation is CPU bounded.
 		//       For input actions like reading policy files / source code, we allow them to run unbounded,
 		//       as the actual limiting is done by this limiter.
-		limiter:    newLimiterFromMaxProcs(),
-		queryCache: qb.queryCache,
+		limiter:                  newLimiterFromMaxProcs(),
+		queryCache:               qb.queryCache,
+		parseArmTemplateDefaults: qb.parseArmTemplateDefaults,
 	}
 	return rv, nil
 }

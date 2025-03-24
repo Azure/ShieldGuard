@@ -14,6 +14,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+replace muzzammil.xyz/jsonc => github.com/muhammadmuzzammil1998/jsonc v1.0.0
+
 require (
 	cuelang.org/go v0.9.2 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
