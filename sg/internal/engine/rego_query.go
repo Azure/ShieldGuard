@@ -178,7 +178,7 @@ func (engine *RegoEngine) queryRule(
 	resolveRuleDocLink := resolveRuleDocLinkFn(policyPackage)
 
 	// execute exception query
-	exceptionQuery := fmt.Sprintf("data.%s.exception[_][_] == %q", PackageMain, policyRule.Name)
+	exceptionQuery := fmt.Sprintf("data.%s.exception[_].%s", PackageMain, policyRule.Name)
 	exceptions, err := engine.executeOneQuery(ctx, loadedConfiguration.Configuration, exceptionQuery)
 	if err != nil {
 		return fmt.Errorf("failed to execute exception query (%q): %w", exceptionQuery, err)
@@ -194,18 +194,20 @@ func (engine *RegoEngine) queryRule(
 	}
 
 	// excluded by at least one exception
-	if len(exceptions) > 0 {
-		for idx := range exceptions {
-			exceptions[idx].Rule = policyRule
-			docLink, err := resolveRuleDocLink(policyRule)
-			if err != nil {
-				return fmt.Errorf("resolve rule doc link failed: %w", err)
-			}
-			exceptions[idx].RuleDocLink = docLink
+	for idx := range exceptions {
+		exceptions[idx].Rule = policyRule
+		docLink, err := resolveRuleDocLink(policyRule)
+		if err != nil {
+			return fmt.Errorf("resolve rule doc link failed: %w", err)
 		}
-		queryResult.Exceptions = append(queryResult.Exceptions, exceptions...)
-		return nil
+		exceptions[idx].RuleDocLink = docLink
+
+		// filter out the results that are excluded by the exception
+		results = utils.Filter(results, func(x result.Result) bool {
+			return x.Metadata["key"] != exceptions[idx].Metadata["key"]
+		})
 	}
+	queryResult.Exceptions = append(queryResult.Exceptions, exceptions...)
 
 	for _, result := range results {
 		if result.Passed() {
