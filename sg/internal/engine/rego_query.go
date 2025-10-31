@@ -9,6 +9,8 @@ import (
 	"github.com/sourcegraph/conc/iter"
 
 	"github.com/Azure/ShieldGuard/sg/internal/armtemplateparser"
+	"github.com/Azure/ShieldGuard/sg/internal/fipschecker"
+	"github.com/Azure/ShieldGuard/sg/internal/imageextractor"
 	"github.com/Azure/ShieldGuard/sg/internal/policy"
 	"github.com/Azure/ShieldGuard/sg/internal/result"
 	"github.com/Azure/ShieldGuard/sg/internal/source"
@@ -20,7 +22,7 @@ type loadedConfiguration struct {
 	Configuration ast.Value
 }
 
-func loadSource(source source.Source, shouldParseArmTemplateDefaults bool) ([]loadedConfiguration, error) {
+func loadSource(source source.Source, shouldParseArmTemplateDefaults bool, enableFIPSCheck bool, fipsScriptPath string) ([]loadedConfiguration, error) {
 	var rv []loadedConfiguration
 
 	configurations, err := source.ParsedConfigurations()
@@ -33,6 +35,56 @@ func loadSource(source source.Source, shouldParseArmTemplateDefaults bool) ([]lo
 
 		if shouldParseArmTemplateDefaults {
 			armtemplateparser.ParseArmTemplateDefaults(t)
+		}
+
+		// Extract images from the AST
+		images := imageextractor.ExtractImages(t.Value)
+		if len(images) > 0 {
+			fmt.Printf("Found %d images in %s:\n", len(images), source.Name())
+			for _, img := range images {
+				fmt.Printf("  - %s at %s\n", img.Image, img.ASTPath)
+			}
+
+			// Run FIPS check if enabled
+			if enableFIPSCheck {
+				fipsClient := fipschecker.NewFIPSClient(fipsScriptPath)
+
+				// Check if fips-check is available
+				if !fipsClient.IsAvailable() {
+					fmt.Printf("Warning: FIPS checker not available at %s, skipping FIPS checks\n", fipsScriptPath)
+				} else {
+					fmt.Printf("Running FIPS compliance checks...\n")
+					fipsResults, err := fipsClient.CheckMultipleImages(images)
+					if err != nil {
+						fmt.Printf("Warning: FIPS check failed: %v\n", err)
+					} else {
+						// Convert fipschecker.FIPSResult to imageextractor.FIPSResult
+						convertedResults := make(map[string]imageextractor.FIPSResult)
+						for path, result := range fipsResults {
+							convertedResults[path] = imageextractor.FIPSResult{
+								Image:       result.Image,
+								IsCompliant: result.IsCompliant,
+								Status:      result.Status,
+								Details:     result.Details,
+								Summary:     result.Summary,
+							}
+						}
+
+						// Augment AST with FIPS results
+						augmentedValue := imageextractor.AugmentASTWithFIPSResults(t.Value, convertedResults)
+						t.Value = augmentedValue
+
+						// Print FIPS results
+						for _, result := range fipsResults {
+							status := "❌ NOT COMPLIANT"
+							if result.IsCompliant {
+								status = "✅ COMPLIANT"
+							}
+							fmt.Printf("  FIPS: %s -> %s\n", result.Image, status)
+						}
+					}
+				}
+			}
 		}
 
 		rv = append(rv, loadedConfiguration{
@@ -65,7 +117,7 @@ func (engine *RegoEngine) Query(
 	source source.Source,
 	opts ...*QueryOptions,
 ) (result.QueryResults, error) {
-	loadedConfigurations, err := loadSource(source, engine.parseArmTemplateDefaults)
+	loadedConfigurations, err := loadSource(source, engine.parseArmTemplateDefaults, false, "")
 	if err != nil {
 		return result.QueryResults{}, fmt.Errorf("failed to load source: %w", err)
 	}

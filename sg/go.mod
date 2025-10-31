@@ -1,6 +1,8 @@
 module github.com/Azure/ShieldGuard/sg
 
-go 1.24.1
+go 1.24.4
+
+toolchain go1.24.9
 
 require (
 	github.com/OneOfOne/xxhash v1.2.8
