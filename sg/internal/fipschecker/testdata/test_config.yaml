@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: istio-proxy
+spec:
+  template:
+    spec:
+      containers:
+      - name: istio-proxy
+        image: mcr.microsoft.com/oss/v2/istio/proxyv2-fips:v1.26.4-1
+        ports:
+        - containerPort: 8080
+      - name: sidecar
+        image: nginx:latest
+        ports:
+        - containerPort: 80
