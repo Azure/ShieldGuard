@@ -1,11 +1,10 @@
 package fipschecker
 
 import (
-	"context"
 	"fmt"
 	"os/exec"
 	"strings"
-	"time"
+	"sync"
 
 	"github.com/Azure/ShieldGuard/sg/internal/imageextractor"
 )
@@ -19,222 +18,129 @@ type FIPSResult struct {
 	Summary     string `json:"summary,omitempty"`
 }
 
-// FIPSClient wraps the fips-check Go API
+// FIPSClient wraps the fips-check shell script
 type FIPSClient struct {
-	useGoAPI bool
+	fipsCheckPath string // Path to the fips-check repository directory
+	cache         sync.Map // Cache for FIPS results by image name
 }
 
-// NewFIPSClient creates a new FIPS checker client using Go API
-func NewFIPSClient(scriptPath string) *FIPSClient {
-	return &FIPSClient{useGoAPI: true}
+// NewFIPSClient creates a new FIPS checker client using the shell script
+func NewFIPSClient(fipsCheckPath string) *FIPSClient {
+	if fipsCheckPath == "" {
+		fipsCheckPath = "/tmp/fips-check" // Default location
+	}
+
+	return &FIPSClient{
+		fipsCheckPath: fipsCheckPath,
+		cache:         sync.Map{},
+	}
 }
 
-// CheckCompliance runs FIPS check on a container image by pulling and scanning it
+// CheckCompliance runs FIPS check on a container image using shell script with caching
 func (c *FIPSClient) CheckCompliance(imageRef imageextractor.ImageReference) (FIPSResult, error) {
-	if c.useGoAPI {
-		return c.checkWithGoAPI(imageRef)
-	}
-
-	// Fallback to legacy shell method if needed
-	return c.checkWithShell(imageRef)
-}
-
-// checkWithGoAPI uses the fips-check Go API to scan container image
-func (c *FIPSClient) checkWithGoAPI(imageRef imageextractor.ImageReference) (FIPSResult, error) {
-	result := FIPSResult{
-		Image: imageRef.Image,
-	}
-
-	// First, check host FIPS environment
-	hostEnv := CheckHostFIPSEnvironment()
-	if !hostEnv.FIPSCapable {
-		result.IsCompliant = false
-		result.Status = "ERROR"
-		result.Details = fmt.Sprintf("Host environment is not FIPS capable: %s", hostEnv.Status)
+	// Check cache first
+	if cached, found := c.cache.Load(imageRef.Image); found {
+		result := cached.(FIPSResult)
+		// Update the ASTPath for this specific reference
+		result.Image = imageRef.Image // Ensure consistency
 		return result, nil
 	}
 
-	// For container images, we need to pull and extract them first
-	// This is a simplified version - in production you'd want proper container handling
-	tempDir, err := c.extractContainerImage(imageRef.Image)
+	// Run the check and cache the result
+	result, err := c.checkWithShellScript(imageRef)
 	if err != nil {
-		result.IsCompliant = false
-		result.Status = "ERROR"
-		result.Details = fmt.Sprintf("Failed to extract container image: %v", err)
-		return result, nil
+		return result, err
 	}
 
-	// Run FIPS check on the extracted container
-	ctx := context.Background()
-	reports, err := Check(ctx, tempDir)
-	if err != nil {
-		result.IsCompliant = false
-		result.Status = "ERROR"
-		result.Details = fmt.Sprintf("FIPS check failed: %v", err)
-		return result, nil
-	}
-
-	// Analyze results
-	result.IsCompliant = c.analyzeReports(reports)
-	if result.IsCompliant {
-		result.Status = "COMPLIANT"
-		result.Details = "All Go binaries pass FIPS compliance checks"
-	} else {
-		result.Status = "NOT COMPLIANT"
-		result.Details = c.formatComplianceIssues(reports)
-	}
-
-	result.Summary = c.formatSummary(reports)
+	// Cache the result by image name
+	c.cache.Store(imageRef.Image, result)
 	return result, nil
 }
 
-// extractContainerImage pulls and extracts a container image for scanning
-func (c *FIPSClient) extractContainerImage(image string) (string, error) {
-	// This is a simplified implementation
-	// In production, you'd want to use proper container libraries like:
-	// - github.com/containers/image/v5
-	// - github.com/google/go-containerregistry
 
-	// For now, use docker to extract
-	tempDir := fmt.Sprintf("/tmp/fips-scan-%s", strings.ReplaceAll(image, "/", "-"))
 
-	// Pull image
-	pullCmd := exec.Command("docker", "pull", image)
-	if err := pullCmd.Run(); err != nil {
-		return "", fmt.Errorf("failed to pull image: %w", err)
-	}
 
-	// Create unique container name to avoid conflicts
-	containerName := fmt.Sprintf("temp-fips-scan-%d", time.Now().UnixNano())
 
-	// Create container and copy filesystem
-	createCmd := exec.Command("docker", "create", "--name", containerName, image)
-	if err := createCmd.Run(); err != nil {
-		return "", fmt.Errorf("failed to create container: %w", err)
-	}
 
-	// Copy files out
-	copyCmd := exec.Command("docker", "cp", containerName+":/", tempDir)
-	copyCmd.Run() // Best effort
-
-	// Cleanup container
-	cleanCmd := exec.Command("docker", "rm", containerName)
-	cleanCmd.Run()
-
-	return tempDir, nil
-}
-
-// analyzeReports determines overall compliance from binary reports
-func (c *FIPSClient) analyzeReports(reports []BinaryReport) bool {
-	if len(reports) == 0 {
-		return false // No Go binaries found
-	}
-
-	for _, report := range reports {
-		if report.Error != nil {
-			continue // Skip errored reports
-		}
-
-		details := report.GoBinaryDetails
-
-		// Check FIPS compliance criteria
-		if !details.UseSystemcrypto {
-			return false // systemcrypto required
-		}
-
-		if details.FailsOnFIPSCheck {
-			return false // Runtime check failed
-		}
-	}
-
-	return true // All binaries are compliant
-}
-
-// formatComplianceIssues creates a summary of compliance issues
-func (c *FIPSClient) formatComplianceIssues(reports []BinaryReport) string {
-	var issues []string
-
-	for _, report := range reports {
-		if report.Error != nil {
-			issues = append(issues, fmt.Sprintf("Error checking %s: %v", report.RelativePath, report.Error))
-			continue
-		}
-
-		details := report.GoBinaryDetails
-		if !details.UseSystemcrypto {
-			issues = append(issues, fmt.Sprintf("%s: systemcrypto not enabled", report.RelativePath))
-		}
-
-		if details.FailsOnFIPSCheck {
-			issues = append(issues, fmt.Sprintf("%s: runtime FIPS check failed", report.RelativePath))
-		}
-	}
-
-	return strings.Join(issues, "; ")
-}
-
-// formatSummary creates a summary of the scan results
-func (c *FIPSClient) formatSummary(reports []BinaryReport) string {
-	totalBinaries := len(reports)
-	systemcryptoCount := 0
-	failedCount := 0
-
-	for _, report := range reports {
-		if report.Error == nil {
-			details := report.GoBinaryDetails
-			if details.UseSystemcrypto {
-				systemcryptoCount++
-			}
-			if details.FailsOnFIPSCheck {
-				failedCount++
-			}
-		}
-	}
-
-	return fmt.Sprintf("Total: %d | Systemcrypto: %d | Failed FIPS: %d",
-		totalBinaries, systemcryptoCount, failedCount)
-}
-
-// checkWithShell is the fallback shell-based implementation
-func (c *FIPSClient) checkWithShell(imageRef imageextractor.ImageReference) (FIPSResult, error) {
+// checkWithShellScript runs FIPS check using the shell script
+func (c *FIPSClient) checkWithShellScript(imageRef imageextractor.ImageReference) (FIPSResult, error) {
 	result := FIPSResult{
 		Image: imageRef.Image,
 	}
 
-	// Execute the fips-check script
-	cmd := exec.Command("bash", "/tmp/fips-check/build-and-check.sh", imageRef.Image)
+	// Execute the fips-check script from the correct directory
+	scriptPath := fmt.Sprintf("%s/build-and-check.sh", c.fipsCheckPath)
+	cmd := exec.Command("bash", scriptPath, imageRef.Image)
+	cmd.Dir = c.fipsCheckPath // Set working directory to fips-check directory
 	output, err := cmd.CombinedOutput()
 
+	outputStr := string(output)
+
+	// Parse output to determine compliance
 	if err != nil {
 		result.IsCompliant = false
 		result.Status = "NOT COMPLIANT"
 		result.Details = fmt.Sprintf("FIPS check failed: %v", err)
 	} else {
-		result.IsCompliant = true
-		result.Status = "COMPLIANT"
+		// Check for actual compliance in output
+		if strings.Contains(outputStr, "❌ FIPS Status: NOT COMPLIANT") ||
+		   strings.Contains(outputStr, "Host is NOT FIPS capable") ||
+		   strings.Contains(outputStr, "Failed FIPS:") && !strings.Contains(outputStr, "Failed FIPS: 0") {
+			result.IsCompliant = false
+			result.Status = "NOT COMPLIANT"
+			result.Details = "Image does not meet FIPS compliance requirements"
+		} else if strings.Contains(outputStr, "✅ FIPS Status: COMPLIANT") &&
+		          strings.Contains(outputStr, "Failed FIPS: 0") &&
+		          strings.Contains(outputStr, "Host is FIPS capable") {
+			result.IsCompliant = true
+			result.Status = "COMPLIANT"
+			result.Details = "All Go binaries pass FIPS compliance checks"
+		} else {
+			result.IsCompliant = false
+			result.Status = "NOT COMPLIANT"
+			result.Details = "Unable to determine FIPS compliance from output"
+		}
 	}
 
-	result.Summary = string(output)
+	result.Summary = outputStr
 	return result, nil
 }
 
-// CheckMultipleImages runs FIPS check on multiple images
+// CheckMultipleImages runs FIPS check on multiple images in parallel with caching
 func (c *FIPSClient) CheckMultipleImages(images []imageextractor.ImageReference) (map[string]FIPSResult, error) {
 	results := make(map[string]FIPSResult)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	// Use a semaphore to limit concurrent FIPS checks (Docker pulls can be resource intensive)
+	semaphore := make(chan struct{}, 3) // Limit to 3 concurrent checks
 
 	for _, img := range images {
-		result, err := c.CheckCompliance(img)
-		if err != nil {
-			result = FIPSResult{
-				Image:       img.Image,
-				IsCompliant: false,
-				Status:      "ERROR",
-				Details:     fmt.Sprintf("Check failed: %v", err),
+		wg.Add(1)
+		go func(imageRef imageextractor.ImageReference) {
+			defer wg.Done()
+
+			// Acquire semaphore
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			result, err := c.CheckCompliance(imageRef)
+			if err != nil {
+				result = FIPSResult{
+					Image:       imageRef.Image,
+					IsCompliant: false,
+					Status:      "ERROR",
+					Details:     fmt.Sprintf("Check failed: %v", err),
+				}
 			}
-		}
-		results[img.ASTPath] = result
+
+			mu.Lock()
+			results[imageRef.ASTPath] = result
+			mu.Unlock()
+		}(img)
 	}
 
+	wg.Wait()
 	return results, nil
 }
 
@@ -322,8 +228,16 @@ func (c *FIPSClient) AggregateResultsByFile(fipsResults map[string]FIPSResult) m
 	return fileResults
 }
 
-// IsAvailable checks if fips-check is available
+// IsAvailable checks if fips-check script is available
 func (c *FIPSClient) IsAvailable() bool {
-	// For Go API, we just check if the package can be imported
-	return c.useGoAPI
+	scriptPath := fmt.Sprintf("%s/build-and-check.sh", c.fipsCheckPath)
+	_, err := exec.LookPath("bash")
+	if err != nil {
+		return false
+	}
+	// Check if script exists
+	if _, err := exec.Command("test", "-f", scriptPath).Output(); err != nil {
+		return false
+	}
+	return true
 }
