@@ -2,10 +2,15 @@ package test
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
 
 	"github.com/Azure/ShieldGuard/sg/internal/engine"
 	"github.com/Azure/ShieldGuard/sg/internal/project"
@@ -18,6 +23,71 @@ import (
 )
 
 var errTestFailure = errors.New("test failed")
+
+// queryerCache caches compiled queryers by policy path hash
+type queryerCache struct {
+	mu     sync.RWMutex
+	cache  map[string]engine.Queryer
+	cliApp *cliApp
+}
+
+func newQueryerCache(app *cliApp) *queryerCache {
+	return &queryerCache{
+		cache:  make(map[string]engine.Queryer),
+		cliApp: app,
+	}
+}
+
+// policyPathsKey generates a unique key for a set of policy paths
+func (qc *queryerCache) policyPathsKey(policyPaths []string) string {
+	// Sort paths to ensure consistent key for same set
+	sortedPaths := make([]string, len(policyPaths))
+	copy(sortedPaths, policyPaths)
+	sort.Strings(sortedPaths)
+
+	// Create hash of sorted paths + parsing options
+	h := sha256.New()
+	h.Write([]byte(strings.Join(sortedPaths, "|")))
+	h.Write([]byte(fmt.Sprintf("|parseDefaults:%v", qc.cliApp.parseArmTemplateDefaults)))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+// getOrCreateQueryer returns a cached queryer or creates a new one
+func (qc *queryerCache) getOrCreateQueryer(policyPaths []string, queryCache engine.QueryCache) (engine.Queryer, error) {
+	key := qc.policyPathsKey(policyPaths)
+
+	// Try to get from cache first
+	qc.mu.RLock()
+	if queryer, exists := qc.cache[key]; exists {
+		qc.mu.RUnlock()
+		return queryer, nil
+	}
+	qc.mu.RUnlock()
+
+	// Not in cache, create new queryer
+	qc.mu.Lock()
+	defer qc.mu.Unlock()
+
+	// Double-check in case another goroutine created it
+	if queryer, exists := qc.cache[key]; exists {
+		return queryer, nil
+	}
+
+	// Create new queryer
+	qb := engine.QueryWithPolicy(policyPaths)
+	if qc.cliApp.enableQueryCache {
+		qb.WithQueueCache(queryCache)
+	}
+	qb.QueryWithParsingArmTemplateDefaults(qc.cliApp.parseArmTemplateDefaults)
+
+	queryer, err := qb.Complete()
+	if err != nil {
+		return nil, err
+	}
+
+	qc.cache[key] = queryer
+	return queryer, nil
+}
 
 type failSettings struct {
 	noFail         bool
@@ -103,14 +173,24 @@ func (cliApp *cliApp) Run() error {
 	}
 
 	queryCache := engine.NewQueryCache()
+	queryerCache := newQueryerCache(cliApp)
 
+	// Process file targets in parallel
+	targetMapper := iter.Mapper[project.FileTargetSpec, []result.QueryResults]{
+		MaxGoroutines: len(projectSpec.Files),
+	}
+
+	allQueryResults, err := targetMapper.MapErr(projectSpec.Files, func(target *project.FileTargetSpec) ([]result.QueryResults, error) {
+		return cliApp.queryFileTargetWithCache(ctx, cliApp.contextRoot, *target, queryCache, queryerCache)
+	})
+	if err != nil {
+		return fmt.Errorf("run targets: %w", err)
+	}
+
+	// Flatten the results
 	var queryResultsList []result.QueryResults
-	for _, target := range projectSpec.Files {
-		queryResult, err := cliApp.queryFileTarget(ctx, cliApp.contextRoot, target, queryCache)
-		if err != nil {
-			return fmt.Errorf("run target (%s): %w", target.Name, err)
-		}
-		queryResultsList = append(queryResultsList, queryResult...)
+	for _, queryResults := range allQueryResults {
+		queryResultsList = append(queryResultsList, queryResults...)
 	}
 
 	if err := presenter.QueryResultsList(cliApp.outputFormat, queryResultsList).
@@ -163,6 +243,40 @@ func (cliApp *cliApp) defaults() error {
 	}
 
 	return nil
+}
+
+func (cliApp *cliApp) queryFileTargetWithCache(
+	ctx context.Context,
+	contextRoot string,
+	target project.FileTargetSpec,
+	queryCache engine.QueryCache,
+	queryerCache *queryerCache,
+) ([]result.QueryResults, error) {
+	resolveToContextRoot := resolveToContextRootFn(contextRoot)
+
+	policyPaths := utils.Map(target.Policies, resolveToContextRoot)
+	paths := utils.Map(target.Paths, resolveToContextRoot)
+	// TODO: load data paths
+	// dataPaths := utils.Map(target.Data, resolveToContextRoot)
+
+	sources, err := source.FromPath(paths).ContextRoot(contextRoot).Complete()
+	if err != nil {
+		return nil, fmt.Errorf("load sources failed: %w", err)
+	}
+
+	// Get or create cached queryer
+	queryer, err := queryerCache.getOrCreateQueryer(policyPaths, queryCache)
+	if err != nil {
+		return nil, fmt.Errorf("create queryer failed: %w", err)
+	}
+
+	queryMapper := iter.Mapper[source.Source, result.QueryResults]{
+		MaxGoroutines: len(sources),
+	}
+
+	return queryMapper.MapErr(sources, func(s *source.Source) (result.QueryResults, error) {
+		return queryer.Query(ctx, *s, &engine.QueryOptions{})
+	})
 }
 
 func (cliApp *cliApp) queryFileTarget(
